@@ -9,13 +9,7 @@ def run_evosuite(evosuite_jar_path, projectCP, class_name, criterion, epa_path, 
         'java -jar {}evosuite-master-1.0.4-SNAPSHOT.jar -projectCP {} -class {} -criterion {} -Dsearch_budget={} -Djunit_allow_restricted_libraries=true -Dp_functional_mocking=\'0.0\' -Dp_reflection_on_private=\'0.0\' -Duse_separate_classloader=\'false\' -Dwrite_covered_goals_file=\'true\' -Dwrite_all_goals_file=\'true\' -Dprint_missed_goals=\'true\' -Dtest_dir={} -Dreport_dir={} -Depa_xml_path={} -Dno_runtime_dependency=\'true\''.format(evosuite_jar_path, projectCP, class_name, criterion, search_budget, test_dir, report_dir, epa_path), shell=True)
 
 def measure_evosuite(evosuite_jar_path, projectCP, testCP, class_name, epa_path):
-    subprocess.run('java -jar {}evosuite-master-1.0.4-SNAPSHOT.jar -projectCP {}:{} -class {} -Depa_xml_path={} -criterion LINE:BRANCH:EPATRANSITION -measureCoverage'.format(evosuite_jar_path, projectCP, testCP, class_name, epa_path))
-
-def run_epa_analysis_evosuite():
-    pass
-
-def read_pit_output():
-    pass
+    subprocess.run('java -jar {}evosuite-master-1.0.4-SNAPSHOT.jar -projectCP {}:{} -class {} -Depa_xml_path={} -criterion LINE:BRANCH:EPATRANSITION -measureCoverage'.format(evosuite_jar_path, projectCP, testCP, class_name, epa_path), shell=True)
 
 def edit_pit_pom(file_path, targetClasses, targetTests, output_file):
     def find_by_subtag(node, subtag):
@@ -86,10 +80,15 @@ if __name__ == '__main__':
     # Corro Evosuite
     # Para el original
     run_evosuite(evosuite_jar_path=evosuite_jar_path, projectCP=original, class_name=class_name, criterion='LINE:BRANCH', epa_path=epa_path, test_dir='test_original', report_dir='report_original')
+    measure_evosuite(evosuite_jar_path=evosuite_jar_path, projectCP=instrumented, testCP='test_original', class_name=class_name, epa_path=epa_path)
     # Para el instrumentado
     run_evosuite(evosuite_jar_path=evosuite_jar_path, projectCP=instrumented, class_name=class_name, criterion='LINE:BRANCH:EPATRANSITION', epa_path=epa_path, test_dir='test_instrumented', report_dir='report_instrumented')
+    measure_evosuite(evosuite_jar_path=evosuite_jar_path, projectCP=instrumented, testCP='test_instrumented', class_name=class_name, epa_path=epa_path)
 
+    # Corro pitest para medir
     pitest_measure(class_name, "{}_ESTest".format(class_name), original, 'test_original')
+    pitest_measure(class_name, "{}_ESTest".format(class_name), original, 'test_instrumented')
+
 '''
 if __name__ == '__main__':
 
