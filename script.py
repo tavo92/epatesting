@@ -9,7 +9,7 @@ def run_evosuite(evosuite_jar_path, projectCP, class_name, criterion, epa_path, 
         'java -jar {}evosuite-master-1.0.4-SNAPSHOT.jar -projectCP {} -class {} -criterion {} -Dsearch_budget={} -Djunit_allow_restricted_libraries=true -Dp_functional_mocking=\'0.0\' -Dp_reflection_on_private=\'0.0\' -Duse_separate_classloader=\'false\' -Dwrite_covered_goals_file=\'true\' -Dwrite_all_goals_file=\'true\' -Dprint_missed_goals=\'true\' -Dtest_dir={} -Dreport_dir={} -Depa_xml_path={} -Dno_runtime_dependency=\'true\''.format(evosuite_jar_path, projectCP, class_name, criterion, search_budget, test_dir, report_dir, epa_path), shell=True)
 
 def measure_evosuite(evosuite_jar_path, projectCP, testCP, class_name, epa_path, report_dir):
-    subprocess.run('java -jar {}evosuite-master-1.0.4-SNAPSHOT.jar -projectCP {}:{} -class {} -Depa_xml_path={} -criterion EPATRANSITION -Dwrite_covered_goals_file=\'true\' -Dwrite_all_goals_file=\'true\' -Dreport_dir={} -measureCoverage'.format(evosuite_jar_path, projectCP, testCP, class_name, epa_path, report_dir), shell=True)
+    subprocess.run('java -jar {}evosuite-master-1.0.4-SNAPSHOT.jar -projectCP {}:{} -class {} -Depa_xml_path={} -criterion LINE:BRANCH:EPATRANSITION -Dwrite_covered_goals_file=\'true\' -Dwrite_all_goals_file=\'true\' -Dreport_dir={} -measureCoverage'.format(evosuite_jar_path, projectCP, testCP, class_name, epa_path, report_dir), shell=True)
 
 def edit_pit_pom(file_path, targetClasses, targetTests, output_file):
     def find_by_subtag(node, subtag):
@@ -43,25 +43,25 @@ def compile_workdir(workdir, evosuite_classes):
     subprocess.run("find -name '*.java' > sources.txt", cwd=workdir, shell=True)
     subprocess.run(["javac", "-classpath", evosuite_classes, "@sources.txt"], cwd=workdir)
 
-def generate_pitest_workdir():
+def generate_pitest_workdir(pitest_dir):
     # Hay que mover todo y trabajar con los directorios de la siguiente
     # manera:
     # pom.xml
     # src/main/java/ < codigo que queremos testear
     # src/test/java/ < testsuite
-    subprocess.run("mkdir pitest", shell=True)
-    subprocess.run("mkdir pitest/src", shell=True)
-    subprocess.run("mkdir pitest/src/main", shell=True)
-    subprocess.run("mkdir pitest/src/main/java", shell=True)
-    subprocess.run("mkdir pitest/src/test", shell=True)
-    subprocess.run("mkdir pitest/src/test/java", shell=True)
+    subprocess.run("mkdir {}".format(pitest_dir), shell=True)
+    subprocess.run("mkdir {}/src".format(pitest_dir), shell=True)
+    subprocess.run("mkdir {}/src/main".format(pitest_dir), shell=True)
+    subprocess.run("mkdir {}/src/main/java".format(pitest_dir), shell=True)
+    subprocess.run("mkdir {}/src/test".format(pitest_dir), shell=True)
+    subprocess.run("mkdir {}/src/test/java".format(pitest_dir), shell=True)
 
-def pitest_measure(targetClasses, targetTests, class_dir, test_dir):
-    generate_pitest_workdir()
-    edit_pit_pom('/home/lucas/Descargas/stackar_rev/pom.xml', targetClasses, targetTests, 'pitest/pom.xml')
-    subprocess.run('cp -r {}/* pitest/src/main/java'.format(class_dir), shell=True)
-    subprocess.run('cp -r {}/* pitest/src/test/java'.format(test_dir), shell=True)
-    run_pitest('pitest/')
+def pitest_measure(pitest_dir, targetClasses, targetTests, class_dir, test_dir):
+    generate_pitest_workdir(pitest_dir)
+    edit_pit_pom('/home/lucas/Descargas/stackar_rev/pom.xml', targetClasses, targetTests, '{}/pom.xml'.format(pitest_dir))
+    subprocess.run('cp -r {}/* {}/src/main/java'.format(class_dir, pitest_dir), shell=True)
+    subprocess.run('cp -r {}/* {}/src/test/java'.format(test_dir, pitest_dir), shell=True)
+    run_pitest('{}/'.format(pitest_dir))
 
 if __name__ == '__main__':
 
@@ -86,8 +86,11 @@ if __name__ == '__main__':
     measure_evosuite(evosuite_jar_path=evosuite_jar_path, projectCP=instrumented, testCP='test_instrumented', class_name=class_name, epa_path=epa_path, report_dir='report_instrumented')
 
     # Corro pitest para medir
-    pitest_measure(class_name, "{}_ESTest".format(class_name), original, 'test_original')
-    pitest_measure(class_name, "{}_ESTest".format(class_name), original, 'test_instrumented')
+    pitest_measure('pitest_original', class_name, "{}_ESTest".format(class_name), original, 'test_original')
+    pitest_measure('pitest_instrumented', class_name, "{}_ESTest".format(class_name), original, 'test_instrumented')
+
+    # Recopilo informacion
+    # De pitest
 
 '''
 if __name__ == '__main__':
