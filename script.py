@@ -80,14 +80,14 @@ if __name__ == '__main__':
     epa_path = '/home/lucas/LAFHIS/evosuite-subjects/workdir/listitr/epa/ListItr.xml'
 
     # Compilo el codigo
-    #compile_workdir(instrumented, evosuite_classes)
-    #compile_workdir(original, evosuite_classes)
+    compile_workdir(instrumented, evosuite_classes)
+    compile_workdir(original, evosuite_classes)
 
     # Corro Evosuite
     # Para el original
-    #run_evosuite(evosuite_jar_path=evosuite_jar_path, projectCP=original, class_name=class_name, criterion='LINE:BRANCH', epa_path=epa_path, test_dir='test_original', report_dir='report_original')
+    run_evosuite(evosuite_jar_path=evosuite_jar_path, projectCP=original, class_name=class_name, criterion='LINE:BRANCH', epa_path=epa_path, test_dir='test_original', report_dir='report_original')
     # Para el instrumentado
-    #run_evosuite(evosuite_jar_path=evosuite_jar_path, projectCP=instrumented, class_name=class_name, criterion='LINE:BRANCH:EPATRANSITION', epa_path=epa_path, test_dir='test_instrumented', report_dir='report_instrumented')
+    run_evosuite(evosuite_jar_path=evosuite_jar_path, projectCP=instrumented, class_name=class_name, criterion='LINE:BRANCH:EPATRANSITION', epa_path=epa_path, test_dir='test_instrumented', report_dir='report_instrumented')
 
     pitest_measure(class_name, "{}_ESTest".format(class_name), original, 'test_original')
 '''
