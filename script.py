@@ -4,6 +4,8 @@ import subprocess
 import csv
 import xml.etree.ElementTree as ET
 
+JUNIT_JAR = '/usr/share/java/junit4-4.12.jar'
+
 def run_evosuite(evosuite_jar_path, projectCP, class_name, criterion, epa_path, search_budget=60, test_dir='test', report_dir='report'):
     subprocess.run(
         'java -jar {}evosuite-master-1.0.4-SNAPSHOT.jar -projectCP {} -class {} -criterion {} -Dsearch_budget={} -Djunit_allow_restricted_libraries=true -Dp_functional_mocking=\'0.0\' -Dp_reflection_on_private=\'0.0\' -Duse_separate_classloader=\'false\' -Dwrite_covered_goals_file=\'true\' -Dwrite_all_goals_file=\'true\' -Dprint_missed_goals=\'true\' -Dtest_dir={} -Dreport_dir={} -Depa_xml_path={} -Dno_runtime_dependency=\'true\''.format(evosuite_jar_path, projectCP, class_name, criterion, search_budget, test_dir, report_dir, epa_path), shell=True)
@@ -39,9 +41,12 @@ def run_pitest(workdir):
     subprocess.run("mvn clean install org.pitest:pitest-maven:mutationCoverage", cwd=workdir, shell=True)
 
 def compile_workdir(workdir, evosuite_classes):
-    #p = subprocess.Popen("pwd", cwd=workdir)
     subprocess.run("find -name '*.java' > sources.txt", cwd=workdir, shell=True)
     subprocess.run(["javac", "-classpath", evosuite_classes, "@sources.txt"], cwd=workdir)
+
+def compile_test_workdir(workdir, subject_class):
+    subprocess.run("find -name '*.java' > sources.txt", cwd=workdir, shell=True)
+    subprocess.run("javac -classpath {}:{} @sources.txt".format(JUNIT_JAR, subject_class), cwd=workdir)
 
 def generate_pitest_workdir(pitest_dir):
     # Hay que mover todo y trabajar con los directorios de la siguiente
@@ -63,6 +68,28 @@ def pitest_measure(pitest_dir, targetClasses, targetTests, class_dir, test_dir):
     subprocess.run('cp -r {}/* {}/src/test/java'.format(test_dir, pitest_dir), shell=True)
     run_pitest('{}/'.format(pitest_dir))
 
+def read_pit_csv(file_name):
+    with open(file_name, newline='') as csvfile:
+        reader = csv.DictReader(csvfile)
+        print(reader)
+        # TODO: Ver el formato
+
+
+def read_jacoco_csv(file_name):
+    with open(file_name, newline='') as csvfile:
+        reader = csv.DictReader(csvfile)
+        # TODO: Ver el formato
+
+def read_pitest_csv(workdir):
+    subprocess.run("find -name '*.csv' > sources.txt", cwd=workdir, shell=True)
+    with open('{}/sources.txt'.format(workdir)) as file:
+        for line in file:
+            # TODO: Juntar la informacion y devolverla
+            if 'mutations' in line:
+                read_pit_csv('{}/{}'.format(workdir, line[2:-1]))
+            elif 'jacoco' in line:
+                read_jacoco_csv('{}/{}'.format(workdir, line[2:-1]))
+
 if __name__ == '__main__':
 
     # Esto deberia pasarlo por parametro
@@ -83,6 +110,10 @@ if __name__ == '__main__':
     measure_evosuite(evosuite_jar_path=evosuite_jar_path, projectCP=instrumented, testCP='test_original', class_name=class_name, epa_path=epa_path, report_dir='report_original')
     # Para el instrumentado
     run_evosuite(evosuite_jar_path=evosuite_jar_path, projectCP=instrumented, class_name=class_name, criterion='LINE:BRANCH:EPATRANSITION', epa_path=epa_path, test_dir='test_instrumented')
+    #Compilo el junit
+    # TODO: SEGUIR!!!!
+    compile_test_workdir('instrumented', instrumented)
+
     measure_evosuite(evosuite_jar_path=evosuite_jar_path, projectCP=instrumented, testCP='test_instrumented', class_name=class_name, epa_path=epa_path, report_dir='report_instrumented')
 
     # Corro pitest para medir
@@ -91,6 +122,7 @@ if __name__ == '__main__':
 
     # Recopilo informacion
     # De pitest
+    read_pitest_csv('pitest_original')
 
 '''
 if __name__ == '__main__':
