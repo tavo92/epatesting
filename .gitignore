@@ -1,0 +1,6 @@
+evosuite-report/
+pitest/
+report_instrumented/
+report_original/
+test_instrumented/
+test_original/
