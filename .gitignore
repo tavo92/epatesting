@@ -1,3 +1,4 @@
+all_reports/
 evosuite-report/
 pitest_instrumented/
 pitest_original/
