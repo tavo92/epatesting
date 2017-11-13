@@ -46,7 +46,7 @@ def compile_workdir(workdir, evosuite_classes):
 
 def compile_test_workdir(workdir, subject_class):
     subprocess.run("find -name '*.java' > sources.txt", cwd=workdir, shell=True)
-    subprocess.run("javac -classpath {}:{} @sources.txt".format(JUNIT_JAR, subject_class), cwd=workdir)
+    subprocess.run("javac -classpath {}:{} @sources.txt".format(JUNIT_JAR, subject_class), cwd=workdir, shell=True)
 
 def generate_pitest_workdir(pitest_dir):
     # Hay que mover todo y trabajar con los directorios de la siguiente
@@ -80,15 +80,21 @@ def read_jacoco_csv(file_name):
         reader = csv.DictReader(csvfile)
         # TODO: Ver el formato
 
+def copy_csv(file_path, file_name):
+    subprocess.run('cp -r {} all_reports/{}.csv'.format(file_path, file_name), shell=True)
+
 def read_pitest_csv(workdir):
     subprocess.run("find -name '*.csv' > sources.txt", cwd=workdir, shell=True)
     with open('{}/sources.txt'.format(workdir)) as file:
         for line in file:
             # TODO: Juntar la informacion y devolverla
+            file_path = '{}/{}'.format(workdir, line[2:-1])
             if 'mutations' in line:
-                read_pit_csv('{}/{}'.format(workdir, line[2:-1]))
+                read_pit_csv(file_path)
+                copy_csv(file_path, '{}_mutations'.format(workdir))
             elif 'jacoco' in line:
-                read_jacoco_csv('{}/{}'.format(workdir, line[2:-1]))
+                read_jacoco_csv(file_path)
+                copy_csv(file_path, '{}_jacoco'.format(workdir))
 
 if __name__ == '__main__':
 
@@ -107,13 +113,11 @@ if __name__ == '__main__':
     # Corro Evosuite
     # Para el original
     run_evosuite(evosuite_jar_path=evosuite_jar_path, projectCP=original, class_name=class_name, criterion='LINE:BRANCH', epa_path=epa_path, test_dir='test_original')
+    compile_test_workdir('test_original', original)
     measure_evosuite(evosuite_jar_path=evosuite_jar_path, projectCP=instrumented, testCP='test_original', class_name=class_name, epa_path=epa_path, report_dir='report_original')
     # Para el instrumentado
     run_evosuite(evosuite_jar_path=evosuite_jar_path, projectCP=instrumented, class_name=class_name, criterion='LINE:BRANCH:EPATRANSITION', epa_path=epa_path, test_dir='test_instrumented')
-    #Compilo el junit
-    # TODO: SEGUIR!!!!
-    compile_test_workdir('instrumented', instrumented)
-
+    compile_test_workdir('test_instrumented', instrumented)
     measure_evosuite(evosuite_jar_path=evosuite_jar_path, projectCP=instrumented, testCP='test_instrumented', class_name=class_name, epa_path=epa_path, report_dir='report_instrumented')
 
     # Corro pitest para medir
@@ -122,8 +126,11 @@ if __name__ == '__main__':
 
     # Recopilo informacion
     # De pitest
+    subprocess.run('mkdir all_reports', shell=True)
     read_pitest_csv('pitest_original')
-
+    read_pitest_csv('pitest_instrumented')
+    copy_csv('report_original/statistics.csv', 'epacoverage_original')
+    copy_csv('report_instrumented/statistics.csv', 'epacoverage_instrumented')
 '''
 if __name__ == '__main__':
 
