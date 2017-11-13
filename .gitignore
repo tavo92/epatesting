@@ -1,5 +1,7 @@
 evosuite-report/
-pitest/
+pitest_instrumented/
+pitest_original/
+report/
 report_instrumented/
 report_original/
 test_instrumented/
