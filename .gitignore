@@ -1,9 +1,1 @@
-all_reports/
-evosuite-report/
-pitest_instrumented/
-pitest_original/
-report/
-report_instrumented/
-report_original/
-test_instrumented/
-test_original/
+*/
