@@ -3,6 +3,7 @@ import argparse
 import subprocess
 import csv
 import xml.etree.ElementTree as ET
+import threading
 
 JUNIT_JAR = '/usr/share/java/junit4-4.12.jar'
 
@@ -97,8 +98,10 @@ def read_pitest_csv(name, workdir):
                 copy_csv(file_path, '{}_jacoco'.format(name))
 
 
-class RunTestEPA():
+class RunTestEPA(threading.Thread):
     def __init__(self, name, junit_jar, code_dir, instrumented_code_dir, original_code_dir, evosuite_classes, evosuite_jar_path, class_name, epa_path, criterion, generated_test_dir, generated_report_evosuite_dir, generated_report_pitest_dir):
+        threading.Thread.__init__(self)
+
         self.name = name
         self.junit_jar = junit_jar
         self.code_dir = code_dir

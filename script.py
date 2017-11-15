@@ -17,5 +17,10 @@ if __name__ == '__main__':
 
     test_instrumented = RunTestEPA(name='{}_instrumented'.format(name), junit_jar=junit_jar, code_dir=instrumented_code_dir, instrumented_code_dir=instrumented_code_dir, original_code_dir=original_code_dir, evosuite_classes=evosuite_classes, evosuite_jar_path=evosuite_jar_path, class_name=class_name, epa_path=epa_path, criterion='LINE:BRANCH:EPATRANSITION', generated_test_dir='test_{}_instrumented'.format(name),  generated_report_evosuite_dir='report_evosuite_{}_instrumented'.format(name),  generated_report_pitest_dir='report_pitest_{}_original'.format(name))
 
-    test_original.run()
-    test_instrumented.run()
+    # Corro los threads
+    test_original.start()
+    test_instrumented.start()
+
+    # Espero que terminen
+    test_original.join()
+    test_instrumented.join()
