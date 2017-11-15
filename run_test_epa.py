@@ -64,7 +64,7 @@ def generate_pitest_workdir(pitest_dir):
 
 def pitest_measure(pitest_dir, targetClasses, targetTests, class_dir, test_dir):
     generate_pitest_workdir(pitest_dir)
-    edit_pit_pom('/home/lucas/Descargas/stackar_rev/pom.xml', targetClasses, targetTests, '{}/pom.xml'.format(pitest_dir))
+    edit_pit_pom('pit_pom.xml', targetClasses, targetTests, '{}/pom.xml'.format(pitest_dir))
     subprocess.run('cp -r {}/* {}/src/main/java'.format(class_dir, pitest_dir), shell=True)
     subprocess.run('cp -r {}/* {}/src/test/java'.format(test_dir, pitest_dir), shell=True)
     run_pitest('{}/'.format(pitest_dir))
