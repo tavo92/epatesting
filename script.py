@@ -1,4 +1,4 @@
-from run_tools import RunTestEPA
+from run_test_epa import RunTestEPA
 
 JUNIT_JAR = '/usr/share/java/junit4-4.12.jar'
 
