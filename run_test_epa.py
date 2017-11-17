@@ -69,32 +69,17 @@ def pitest_measure(pitest_dir, targetClasses, targetTests, class_dir, test_dir):
     subprocess.run('cp -r {}/* {}/src/test/java'.format(test_dir, pitest_dir), shell=True)
     run_pitest('{}/'.format(pitest_dir))
 
-def read_pit_csv(file_name):
-    with open(file_name, newline='') as csvfile:
-        reader = csv.DictReader(csvfile)
-        print(reader)
-        # TODO: Ver el formato
-
-
-def read_jacoco_csv(file_name):
-    with open(file_name, newline='') as csvfile:
-        reader = csv.DictReader(csvfile)
-        # TODO: Ver el formato
-
 def copy_csv(file_path, file_name):
     subprocess.run('cp -r {} all_reports/{}.csv'.format(file_path, file_name), shell=True)
 
-def read_pitest_csv(name, workdir):
+def copy_pitest_csv(name, workdir):
     subprocess.run("find -name '*.csv' > sources.txt", cwd=workdir, shell=True)
     with open('{}/sources.txt'.format(workdir)) as file:
         for line in file:
-            # TODO: Juntar la informacion y devolverla
             file_path = '{}/{}'.format(workdir, line[2:-1])
             if 'mutations' in line:
-                read_pit_csv(file_path)
                 copy_csv(file_path, '{}_mutations'.format(name))
             elif 'jacoco' in line:
-                read_jacoco_csv(file_path)
                 copy_csv(file_path, '{}_jacoco'.format(name))
 
 
@@ -133,5 +118,5 @@ class RunTestEPA(threading.Thread):
         # Recopilo informacion
         # De pitest
         subprocess.run('mkdir all_reports', shell=True)
-        read_pitest_csv(self.name, self.generated_report_pitest_dir)
+        copy_pitest_csv(self.name, self.generated_report_pitest_dir)
         copy_csv('{}/statistics.csv'.format(self.generated_report_evosuite_dir), 'epacoverage_{}'.format(self.name))
