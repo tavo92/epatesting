@@ -1,10 +1,11 @@
 from run_test_epa import RunTestEPA
+from make_report_resume import make_report_resume
 
 JUNIT_JAR = '/usr/share/java/junit4-4.12.jar'
 
 if __name__ == '__main__':
     # Crear la clase y llamarla
-    name = 'listir'
+    name = 'ListItr'
     junit_jar = '/usr/share/java/junit4-4.12.jar'
     instrumented_code_dir = '/home/lucas/LAFHIS/evosuite-subjects/workdir/listitr/instrumented'
     original_code_dir = '/home/lucas/LAFHIS/evosuite-subjects/workdir/listitr/original'
@@ -24,3 +25,5 @@ if __name__ == '__main__':
     # Espero que terminen
     test_original.join()
     test_instrumented.join()
+
+    make_report_resume(name, 'all_reports/epacoverage_{}_original.csv'.format(name), 'all_reports/{}_original_jacoco.csv'.format(name), 'all_reports/{}_original_mutations.csv'.format(name), 'all_reports/epacoverage_{}_instrumented.csv'.format(name), 'all_reports/{}_instrumented_jacoco.csv'.format(name), 'all_reports/{}_instrumented_mutations.csv'.format(name), 'resume.csv')
