@@ -70,7 +70,8 @@ def pitest_measure(pitest_dir, targetClasses, targetTests, class_dir, test_dir):
     run_pitest('{}/'.format(pitest_dir))
 
 def copy_csv(file_path, file_name):
-    subprocess.run('cp -r {} all_reports/{}.csv'.format(file_path, file_name), shell=True)
+    print('cp {} all_reports/{}.csv'.format(file_path, file_name))
+    subprocess.run('cp {} all_reports/{}.csv'.format(file_path, file_name), shell=True)
 
 def copy_pitest_csv(name, workdir):
     subprocess.run("find -name '*.csv' > sources.txt", cwd=workdir, shell=True)
