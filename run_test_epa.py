@@ -7,7 +7,7 @@ import threading
 
 JUNIT_JAR = '/usr/share/java/junit4-4.12.jar'
 
-def run_evosuite(evosuite_jar_path, projectCP, class_name, criterion, epa_path, search_budget=60, test_dir='test', report_dir='report'):
+def run_evosuite(evosuite_jar_path, projectCP, class_name, criterion, epa_path, search_budget, test_dir='test', report_dir='report'):
     subprocess.run(
         'java -jar {}evosuite-master-1.0.4-SNAPSHOT.jar -projectCP {} -class {} -criterion {} -Dsearch_budget={} -Djunit_allow_restricted_libraries=true -Dp_functional_mocking=\'0.0\' -Dp_reflection_on_private=\'0.0\' -Duse_separate_classloader=\'false\' -Dwrite_covered_goals_file=\'true\' -Dwrite_all_goals_file=\'true\' -Dprint_missed_goals=\'true\' -Dtest_dir={} -Dreport_dir={} -Depa_xml_path={} -Dno_runtime_dependency=\'true\''.format(evosuite_jar_path, projectCP, class_name, criterion, search_budget, test_dir, report_dir, epa_path), shell=True)
 
@@ -85,9 +85,10 @@ def copy_pitest_csv(name, workdir):
 
 
 class RunTestEPA(threading.Thread):
-    def __init__(self, name, junit_jar, code_dir, instrumented_code_dir, original_code_dir, evosuite_classes, evosuite_jar_path, class_name, epa_path, criterion, generated_test_dir, generated_report_evosuite_dir, generated_report_pitest_dir):
+    def __init__(self, name, junit_jar, code_dir, instrumented_code_dir, original_code_dir, evosuite_classes, evosuite_jar_path, class_name, epa_path, criterion, search_budget, runid):
         threading.Thread.__init__(self)
 
+        subdir = 'results/{}/{}/{}/'.format(criterion.replace(':', '_').lower(), search_budget, runid)
         self.name = name
         self.junit_jar = junit_jar
         self.code_dir = code_dir
@@ -98,16 +99,18 @@ class RunTestEPA(threading.Thread):
         self.class_name = class_name
         self.epa_path = epa_path
         self.criterion = criterion
-        self.generated_test_dir = generated_test_dir
-        self.generated_report_evosuite_dir = generated_report_evosuite_dir
-        self.generated_report_pitest_dir = generated_report_pitest_dir
+        self.generated_test_dir = '{}test'.format(subdir)
+        self.generated_report_evosuite_dir = '{}report_evosuite'.format(subdir)
+        self.generated_report_pitest_dir = '{}report_pitest'.format(subdir)
+        self.search_budget = search_budget
+        self.runid = runid
 
     def run(self):
         # Compilo el codigo
         compile_workdir(self.code_dir, self.evosuite_classes)
 
         # Corro Evosuite
-        run_evosuite(evosuite_jar_path=self.evosuite_jar_path, projectCP=self.code_dir, class_name=self.class_name, criterion=self.criterion, epa_path=self.epa_path, test_dir=self.generated_test_dir)
+        run_evosuite(evosuite_jar_path=self.evosuite_jar_path, projectCP=self.code_dir, class_name=self.class_name, criterion=self.criterion, epa_path=self.epa_path, test_dir=self.generated_test_dir, search_budget=self.search_budget)
 
         compile_test_workdir(self.generated_test_dir, self.code_dir)
 
@@ -115,6 +118,9 @@ class RunTestEPA(threading.Thread):
 
         # Corro pitest para medir
         pitest_measure(self.generated_report_pitest_dir, self.class_name, "{}_ESTest".format(self.class_name), self.original_code_dir, self.generated_test_dir)
+
+        # Borro directorios generados que no son necesarios
+        subprocess.run('rm -r evosuite-report/ report/', shell=True)
 
         # Recopilo informacion
         # De pitest
