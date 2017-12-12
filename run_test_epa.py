@@ -5,6 +5,8 @@ import csv
 import xml.etree.ElementTree as ET
 import threading
 
+from make_report_resume import make_report_resume
+
 JUNIT_JAR = '/usr/share/java/junit4-4.12.jar'
 
 def run_evosuite(evosuite_jar_path, projectCP, class_name, criterion, epa_path, search_budget, test_dir='test', report_dir='report'):
@@ -69,26 +71,26 @@ def pitest_measure(pitest_dir, targetClasses, targetTests, class_dir, test_dir):
     subprocess.run('cp -r {}/* {}/src/test/java'.format(test_dir, pitest_dir), shell=True)
     run_pitest('{}/'.format(pitest_dir))
 
-def copy_csv(file_path, file_name):
-    print('cp {} all_reports/{}.csv'.format(file_path, file_name))
-    subprocess.run('cp {} all_reports/{}.csv'.format(file_path, file_name), shell=True)
+def copy_csv(file_path, file_name, all_report_dir):
+    print('cp {} {}/{}.csv'.format(file_path, all_report_dir, file_name))
+    subprocess.run('cp {} {}/{}.csv'.format(file_path, all_report_dir, file_name), shell=True)
 
-def copy_pitest_csv(name, workdir):
+def copy_pitest_csv(name, workdir, all_report_dir):
     subprocess.run("find -name '*.csv' > sources.txt", cwd=workdir, shell=True)
     with open('{}/sources.txt'.format(workdir)) as file:
         for line in file:
             file_path = '{}/{}'.format(workdir, line[2:-1])
             if 'mutations' in line:
-                copy_csv(file_path, '{}_mutations'.format(name))
+                copy_csv(file_path, '{}_mutations'.format(name), all_report_dir)
             elif 'jacoco' in line:
-                copy_csv(file_path, '{}_jacoco'.format(name))
+                copy_csv(file_path, '{}_jacoco'.format(name), all_report_dir)
 
 
 class RunTestEPA(threading.Thread):
     def __init__(self, name, junit_jar, code_dir, instrumented_code_dir, original_code_dir, evosuite_classes, evosuite_jar_path, class_name, epa_path, criterion, search_budget, runid):
         threading.Thread.__init__(self)
 
-        subdir = 'results/{}/{}/{}/'.format(criterion.replace(':', '_').lower(), search_budget, runid)
+        self.subdir = 'results/{}/{}/{}/'.format(criterion.replace(':', '_').lower(), search_budget, runid)
         self.name = name
         self.junit_jar = junit_jar
         self.code_dir = code_dir
@@ -99,9 +101,9 @@ class RunTestEPA(threading.Thread):
         self.class_name = class_name
         self.epa_path = epa_path
         self.criterion = criterion
-        self.generated_test_dir = '{}test'.format(subdir)
-        self.generated_report_evosuite_dir = '{}report_evosuite'.format(subdir)
-        self.generated_report_pitest_dir = '{}report_pitest'.format(subdir)
+        self.generated_test_dir = '{}test'.format(self.subdir)
+        self.generated_report_evosuite_dir = '{}report_evosuite'.format(self.subdir)
+        self.generated_report_pitest_dir = '{}report_pitest'.format(self.subdir)
         self.search_budget = search_budget
         self.runid = runid
 
@@ -124,6 +126,9 @@ class RunTestEPA(threading.Thread):
 
         # Recopilo informacion
         # De pitest
-        subprocess.run('mkdir all_reports', shell=True)
-        copy_pitest_csv(self.name, self.generated_report_pitest_dir)
-        copy_csv('{}/statistics.csv'.format(self.generated_report_evosuite_dir), 'epacoverage_{}'.format(self.name))
+        all_report_dir = '{}all_reports'.format(self.subdir)
+        subprocess.run('mkdir {}'.format(all_report_dir), shell=True)
+        copy_pitest_csv(self.name, self.generated_report_pitest_dir, all_report_dir)
+        copy_csv('{}/statistics.csv'.format(self.generated_report_evosuite_dir), 'epacoverage_{}'.format(self.name), all_report_dir)
+
+        make_report_resume(self.name, '{}/epacoverage_{}.csv'.format(all_report_dir, self.name), '{}/{}_jacoco.csv'.format(all_report_dir, self.name), '{}/{}_mutations.csv'.format(all_report_dir, self.name), '{}resume.csv'.format(self.subdir))

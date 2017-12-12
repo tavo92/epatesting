@@ -31,17 +31,16 @@ def read_pit_csv(file_path):
                 killed += 1
     return killed/total
 
-def report_resume_row(name, code_type, evosuite, jacoco, pit):
+def report_resume_row(name, evosuite, jacoco, pit):
     epa_coverage = read_evosuite_csv(evosuite)
     branch_coverage, line_coverage = read_jacoco_csv(name, jacoco)
     mutation_coverage = read_pit_csv(pit)
-    return {'Class': name, 'Type': code_type, 'EPA Coverage': epa_coverage, 'Branch Coverage': branch_coverage, 'Line Coverage': line_coverage, 'Mutation Coverage': mutation_coverage}
+    return {'Class': name, 'EPA Coverage': epa_coverage, 'Branch Coverage': branch_coverage, 'Line Coverage': line_coverage, 'Mutation Coverage': mutation_coverage}
 
-def make_report_resume(name, original_evosuite, original_jacoco, original_pit, instrumented_evosuite, instrumented_jacoco, instrumented_pit, output_file):
+def make_report_resume(name, evosuite, jacoco, pit, output_file):
     with open(output_file, 'w', newline='') as csvfile:
-        fieldnames = ['Class', 'Type', 'EPA Coverage', 'Branch Coverage', 'Line Coverage', 'Mutation Coverage']
+        fieldnames = ['Class', 'EPA Coverage', 'Branch Coverage', 'Line Coverage', 'Mutation Coverage']
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
 
         writer.writeheader()
-        writer.writerow(report_resume_row(name, 'Original', original_evosuite, original_jacoco, original_pit))
-        writer.writerow(report_resume_row(name, 'Instrumented', instrumented_evosuite, instrumented_jacoco, instrumented_pit))
+        writer.writerow(report_resume_row(name, evosuite, jacoco, pit))
