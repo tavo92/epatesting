@@ -7,8 +7,6 @@ import threading
 
 from make_report_resume import make_report_resume
 
-JUNIT_JAR = '/usr/share/java/junit4-4.12.jar'
-
 def run_evosuite(evosuite_jar_path, projectCP, class_name, criterion, epa_path, search_budget, test_dir='test', report_dir='report'):
     subprocess.run(
         'java -jar {}evosuite-master-1.0.4-SNAPSHOT.jar -projectCP {} -class {} -criterion {} -Dsearch_budget={} -Djunit_allow_restricted_libraries=true -Dp_functional_mocking=\'0.0\' -Dp_reflection_on_private=\'0.0\' -Duse_separate_classloader=\'false\' -Dwrite_covered_goals_file=\'true\' -Dwrite_all_goals_file=\'true\' -Dprint_missed_goals=\'true\' -Dtest_dir={} -Dreport_dir={} -Depa_xml_path={} -Dno_runtime_dependency=\'true\''.format(evosuite_jar_path, projectCP, class_name, criterion, search_budget, test_dir, report_dir, epa_path), shell=True)
@@ -47,9 +45,9 @@ def compile_workdir(workdir, evosuite_classes):
     subprocess.run("find -name '*.java' > sources.txt", cwd=workdir, shell=True)
     subprocess.run(["javac", "-classpath", evosuite_classes, "@sources.txt"], cwd=workdir)
 
-def compile_test_workdir(workdir, subject_class):
+def compile_test_workdir(workdir, subject_class, junit_jar):
     subprocess.run("find -name '*.java' > sources.txt", cwd=workdir, shell=True)
-    subprocess.run("javac -classpath {}:{} @sources.txt".format(JUNIT_JAR, subject_class), cwd=workdir, shell=True)
+    subprocess.run("javac -classpath {}:{} @sources.txt".format(junit_jar, subject_class), cwd=workdir, shell=True)
 
 def generate_pitest_workdir(pitest_dir):
     # Hay que mover todo y trabajar con los directorios de la siguiente
@@ -114,7 +112,7 @@ class RunTestEPA(threading.Thread):
         # Corro Evosuite
         run_evosuite(evosuite_jar_path=self.evosuite_jar_path, projectCP=self.code_dir, class_name=self.class_name, criterion=self.criterion, epa_path=self.epa_path, test_dir=self.generated_test_dir, search_budget=self.search_budget)
 
-        compile_test_workdir(self.generated_test_dir, self.code_dir)
+        compile_test_workdir(self.generated_test_dir, self.code_dir, self.junit_jar)
 
         measure_evosuite(evosuite_jar_path=self.evosuite_jar_path, projectCP=self.instrumented_code_dir, testCP=self.generated_test_dir, class_name=self.class_name, epa_path=self.epa_path, report_dir=self.generated_report_evosuite_dir)
 
