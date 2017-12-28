@@ -112,7 +112,8 @@ class RunTestEPA(threading.Thread):
 
     def run(self):
         # Compilo el codigo
-        compile_workdir(self.code_dir, self.evosuite_classes)
+        compile_workdir(self.original_code_dir, self.evosuite_classes)
+        compile_workdir(self.instrumented_code_dir, self.evosuite_classes)
 
         # Corro Evosuite
         run_evosuite(evosuite_jar_path=self.evosuite_jar_path, projectCP=self.code_dir, class_name=self.class_name, criterion=self.criterion, epa_path=self.epa_path, test_dir=self.generated_test_dir, search_budget=self.search_budget)
