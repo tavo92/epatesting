@@ -43,7 +43,10 @@ def run_pitest(workdir):
 
 def compile_workdir(workdir, evosuite_classes):
     subprocess.run("find -name '*.java' > sources.txt", cwd=workdir, shell=True)
-    subprocess.run(["javac", "-classpath", evosuite_classes, "@sources.txt"], cwd=workdir)
+    print("javac -classpath {} @sources.txt".format(evosuite_classes))
+    print("En workdir {}".format(workdir))
+    subprocess.run("javac -classpath {} @sources.txt".format(evosuite_classes), cwd=workdir, shell=True)
+    #subprocess.run(["javac", "-classpath", evosuite_classes, "@sources.txt"], cwd=workdir)
 
 def compile_test_workdir(workdir, subject_class, junit_jar):
     subprocess.run("find -name '*.java' > sources.txt", cwd=workdir, shell=True)
