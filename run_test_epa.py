@@ -42,14 +42,14 @@ def run_pitest(workdir):
     subprocess.run("mvn clean install org.pitest:pitest-maven:mutationCoverage", cwd=workdir, shell=True)
 
 def compile_workdir(workdir, evosuite_classes):
-    subprocess.run("find -name '*.java' > sources.txt", cwd=workdir, shell=True)
+    subprocess.run("find . -name '*.java' > sources.txt", cwd=workdir, shell=True)
     print("javac -classpath {} @sources.txt".format(evosuite_classes))
     print("En workdir {}".format(workdir))
     subprocess.run("javac -classpath {} @sources.txt".format(evosuite_classes), cwd=workdir, shell=True)
     #subprocess.run(["javac", "-classpath", evosuite_classes, "@sources.txt"], cwd=workdir)
 
 def compile_test_workdir(workdir, subject_class, junit_jar):
-    subprocess.run("find -name '*.java' > sources.txt", cwd=workdir, shell=True)
+    subprocess.run("find . -name '*.java' > sources.txt", cwd=workdir, shell=True)
     subprocess.run("javac -classpath {}:{} @sources.txt".format(junit_jar, subject_class), cwd=workdir, shell=True)
 
 def generate_pitest_workdir(pitest_dir):
@@ -77,7 +77,7 @@ def copy_csv(file_path, file_name, all_report_dir):
     subprocess.run('cp {} {}/{}.csv'.format(file_path, all_report_dir, file_name), shell=True)
 
 def copy_pitest_csv(name, workdir, all_report_dir):
-    subprocess.run("find -name '*.csv' > sources.txt", cwd=workdir, shell=True)
+    subprocess.run("find . -name '*.csv' > sources.txt", cwd=workdir, shell=True)
     with open('{}/sources.txt'.format(workdir)) as file:
         for line in file:
             file_path = '{}/{}'.format(workdir, line[2:-1])
