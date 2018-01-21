@@ -7,13 +7,13 @@ def read_config_file(config_file):
     config = configparser.ConfigParser()
     config.read(config_file)
 
-    # Leo primero los valores de configuracion que se usan en todas las corridas
+    # Reads the configuration values that will be used in each run
     junit_jar = config['DEFAULT']['JUnitJAR']
     evosuite_classes = config['DEFAULT']['EvoSuiteClasses']
     evosuite_jar_path = config['DEFAULT']['EvoSuiteJARPath']
     chunk_size = int(config['DEFAULT']['ChunkSize'])
 
-    # Voy recorriendo lo que este definido
+    # Reads each section witch defines a run
     tests_to_run = []
     runid = 0
     for section in config.sections():
@@ -30,7 +30,7 @@ def read_config_file(config_file):
     return [tests_to_run[x:x+chunk_size] for x in range(0, len(tests_to_run), chunk_size)]
 
 if __name__ == '__main__':
-    # Corro todos los tests
+    # Run all the tests
     test_chunks = read_config_file('config_example.ini')
     for chunk in test_chunks:
         for test in chunk:

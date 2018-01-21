@@ -32,9 +32,9 @@ def edit_pit_pom(file_path, targetClasses, targetTests, output_file):
     plugins = find_by_subtag(build, "plugins")
     pitest_plugin = find_pit_plugin(plugins)
     configuration = find_by_subtag(pitest_plugin, "configuration")
-    # Cambio el targetClasses
+    # Changes the targetClasses
     configuration[0][0].text = targetClasses
-    # Cambio el targetTests
+    # Changes the targetTests
     configuration[1][0].text = targetTests
     ET.register_namespace('', "http://maven.apache.org/POM/4.0.0")
     ET.register_namespace('xsi', "http://www.w3.org/2001/XMLSchema-instance")
@@ -44,7 +44,7 @@ def run_pitest(workdir):
     subprocess.run("mvn clean install org.pitest:pitest-maven:mutationCoverage", cwd=workdir, shell=True)
 
 def compile_workdir(workdir, evosuite_classes):
-    '''
+    ''' TODO:
     -d directory
 Set the destination directory for class files. The directory must already exist; javac will not create it. If a class is part of a package, javac puts the class file in a subdirectory reflecting the package name, creating directories as needed. For example, if you specify -d C:\myclasses and the class is called com.mypackage.MyClass, then the class file is called C:\myclasses\com\mypackage\MyClass.class.
 If -d is not specified, javac puts each class files in the same directory as the source file from which it was generated.
@@ -54,16 +54,15 @@ Note: The directory specified by -d is not automatically added to your user clas
     '''
     subprocess.run("find . -name '*.java' > sources.txt", cwd=workdir, shell=True)
     print("javac -classpath {} @sources.txt".format(evosuite_classes))
-    print("En workdir {}".format(workdir))
+    print("In workdir {}".format(workdir))
     subprocess.run("javac -classpath {} @sources.txt".format(evosuite_classes), cwd=workdir, shell=True)
-    #subprocess.run(["javac", "-classpath", evosuite_classes, "@sources.txt"], cwd=workdir)
 
 def compile_test_workdir(workdir, subject_class, junit_jar):
     subprocess.run("find . -name '*.java' > sources.txt", cwd=workdir, shell=True)
     subprocess.run("javac -classpath {}:{} @sources.txt".format(junit_jar, subject_class), cwd=workdir, shell=True)
 
 def generate_pitest_workdir(pitest_dir):
-    # Hay que mover todo y trabajar con los directorios de la siguiente
+    # TODO: Hay que mover todo y trabajar con los directorios de la siguiente
     # manera:
     # pom.xml
     # src/main/java/ < codigo que queremos testear
@@ -119,28 +118,26 @@ class RunTestEPA(threading.Thread):
         self.runid = runid
 
     def run(self):
-        # Compilo el codigo
+        # Compile code
         compile_workdir(self.original_code_dir, self.evosuite_classes)
         compile_workdir(self.instrumented_code_dir, self.evosuite_classes)
 
-        # Corro Evosuite
+        # Run Evosuite
         run_evosuite(evosuite_jar_path=self.evosuite_jar_path, projectCP=self.code_dir, class_name=self.class_name, criterion=self.criterion, epa_path=self.epa_path, test_dir=self.generated_test_dir, search_budget=self.search_budget)
 
         compile_test_workdir(self.generated_test_dir, self.code_dir, self.junit_jar)
 
         measure_evosuite(evosuite_jar_path=self.evosuite_jar_path, projectCP=self.instrumented_code_dir, testCP=self.generated_test_dir, class_name=self.class_name, epa_path=self.epa_path, report_dir=self.generated_report_evosuite_dir)
 
-        # Corro pitest para medir
+        # Run Pitest to measure
         pitest_measure(self.generated_report_pitest_dir, self.class_name, "{}_ESTest".format(self.class_name), self.original_code_dir, self.generated_test_dir)
 
-        # Borro directorios generados que no son necesarios
+        # Clean directorys
         subprocess.run('rm -r evosuite-report/ report/', shell=True)
 
-        # Recopilo informacion
-        # De pitest
+        # Resume the reports generated
         all_report_dir = '{}all_reports'.format(self.subdir)
         subprocess.run('mkdir {}'.format(all_report_dir), shell=True)
         copy_pitest_csv(self.name, self.generated_report_pitest_dir, all_report_dir)
         copy_csv('{}/statistics.csv'.format(self.generated_report_evosuite_dir), 'epacoverage_{}'.format(self.name), all_report_dir)
-
         make_report_resume(self.name, '{}/epacoverage_{}.csv'.format(all_report_dir, self.name), '{}/{}_jacoco.csv'.format(all_report_dir, self.name), '{}/{}_mutations.csv'.format(all_report_dir, self.name), '{}resume.csv'.format(self.subdir))
