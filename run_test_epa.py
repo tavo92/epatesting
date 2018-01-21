@@ -44,6 +44,14 @@ def run_pitest(workdir):
     subprocess.run("mvn clean install org.pitest:pitest-maven:mutationCoverage", cwd=workdir, shell=True)
 
 def compile_workdir(workdir, evosuite_classes):
+    '''
+    -d directory
+Set the destination directory for class files. The directory must already exist; javac will not create it. If a class is part of a package, javac puts the class file in a subdirectory reflecting the package name, creating directories as needed. For example, if you specify -d C:\myclasses and the class is called com.mypackage.MyClass, then the class file is called C:\myclasses\com\mypackage\MyClass.class.
+If -d is not specified, javac puts each class files in the same directory as the source file from which it was generated.
+
+Note: The directory specified by -d is not automatically added to your user class path.
+
+    '''
     subprocess.run("find . -name '*.java' > sources.txt", cwd=workdir, shell=True)
     print("javac -classpath {} @sources.txt".format(evosuite_classes))
     print("En workdir {}".format(workdir))
