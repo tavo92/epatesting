@@ -7,13 +7,20 @@ import threading
 
 from make_report_resume import make_report_resume
 
+def print_command(command, workdir=None):
+    print('Executing command in shell:')
+    if workdir is not None:
+        print('In workdir: {}'.format(workdir))
+    print(command)
+
 def run_evosuite(evosuite_jar_path, projectCP, class_name, criterion, epa_path, search_budget, test_dir='test', report_dir='report'):
-    subprocess.run(
-        'java -jar {}evosuite-master-1.0.4-SNAPSHOT.jar -projectCP {} -class {} -criterion {} -Dsearch_budget={} -Djunit_allow_restricted_libraries=true -Dp_functional_mocking=\'0.0\' -Dp_reflection_on_private=\'0.0\' -Duse_separate_classloader=\'false\' -Dwrite_covered_goals_file=\'true\' -Dwrite_all_goals_file=\'true\' -Dprint_missed_goals=\'true\' -Dtest_dir={} -Dreport_dir={} -Depa_xml_path={} -Dno_runtime_dependency=\'true\''.format(evosuite_jar_path, projectCP, class_name, criterion, search_budget, test_dir, report_dir, epa_path), shell=True)
+    command = 'java -jar {}evosuite-master-1.0.4-SNAPSHOT.jar -projectCP {} -class {} -criterion {} -Dsearch_budget={} -Djunit_allow_restricted_libraries=true -Dp_functional_mocking=\'0.0\' -Dp_reflection_on_private=\'0.0\' -Duse_separate_classloader=\'false\' -Dwrite_covered_goals_file=\'true\' -Dwrite_all_goals_file=\'true\' -Dprint_missed_goals=\'true\' -Dtest_dir={} -Dreport_dir={} -Depa_xml_path={} -Dno_runtime_dependency=\'true\''.format(evosuite_jar_path, projectCP, class_name, criterion, search_budget, test_dir, report_dir, epa_path)
+    print_command(command)
+    subprocess.run(command, shell=True)
 
 def measure_evosuite(evosuite_jar_path, projectCP, testCP, class_name, epa_path, report_dir):
     command = 'java -jar {}evosuite-master-1.0.4-SNAPSHOT.jar -projectCP {}:{} -class {} -Depa_xml_path={} -criterion EPATRANSITION -Dwrite_covered_goals_file=\'true\' -Dwrite_all_goals_file=\'true\' -Dreport_dir={} -measureCoverage'.format(evosuite_jar_path, projectCP, testCP, class_name, epa_path, report_dir)
-    print(command)
+    print_command(command)
     subprocess.run(command, shell=True)
 
 def edit_pit_pom(file_path, targetClasses, targetTests, output_file):
@@ -41,7 +48,9 @@ def edit_pit_pom(file_path, targetClasses, targetTests, output_file):
     tree.write(output_file, default_namespace="")
 
 def run_pitest(workdir):
-    subprocess.run("mvn clean install org.pitest:pitest-maven:mutationCoverage", cwd=workdir, shell=True)
+    command = "mvn clean install org.pitest:pitest-maven:mutationCoverage"
+    print_command(command, workdir)
+    subprocess.run(command, cwd=workdir, shell=True)
 
 def compile_workdir(workdir, evosuite_classes):
     ''' TODO:
@@ -52,14 +61,22 @@ If -d is not specified, javac puts each class files in the same directory as the
 Note: The directory specified by -d is not automatically added to your user class path.
 
     '''
-    subprocess.run("find . -name '*.java' > sources.txt", cwd=workdir, shell=True)
-    print("javac -classpath {} @sources.txt".format(evosuite_classes))
-    print("In workdir {}".format(workdir))
-    subprocess.run("javac -classpath {} @sources.txt".format(evosuite_classes), cwd=workdir, shell=True)
+    command_find = "find . -name '*.java' > sources.txt"
+    print_command(command_find, workdir)
+    subprocess.run(command_find, cwd=workdir, shell=True)
+
+    command_compile = "javac -classpath {} @sources.txt".format(evosuite_classes)
+    print_command(command_compile, workdir)
+    subprocess.run(command_compile, cwd=workdir, shell=True)
 
 def compile_test_workdir(workdir, subject_class, junit_jar):
-    subprocess.run("find . -name '*.java' > sources.txt", cwd=workdir, shell=True)
-    subprocess.run("javac -classpath {}:{} @sources.txt".format(junit_jar, subject_class), cwd=workdir, shell=True)
+    command_find = "find . -name '*.java' > sources.txt"
+    print_command(command_find, workdir)
+    subprocess.run(command_find, cwd=workdir, shell=True)
+
+    command_compile = "javac -classpath {}:{} @sources.txt".format(junit_jar, subject_class)
+    print_command(command_compile, workdir)
+    subprocess.run(command_compile, cwd=workdir, shell=True)
 
 def generate_pitest_workdir(pitest_dir):
     # TODO: Hay que mover todo y trabajar con los directorios de la siguiente
@@ -67,26 +84,54 @@ def generate_pitest_workdir(pitest_dir):
     # pom.xml
     # src/main/java/ < codigo que queremos testear
     # src/test/java/ < testsuite
-    subprocess.run("mkdir {}".format(pitest_dir), shell=True)
-    subprocess.run("mkdir {}/src".format(pitest_dir), shell=True)
-    subprocess.run("mkdir {}/src/main".format(pitest_dir), shell=True)
-    subprocess.run("mkdir {}/src/main/java".format(pitest_dir), shell=True)
-    subprocess.run("mkdir {}/src/test".format(pitest_dir), shell=True)
-    subprocess.run("mkdir {}/src/test/java".format(pitest_dir), shell=True)
+    command_mkdir_home = "mkdir {}".format(pitest_dir)
+    print_command(command_mkdir_home)
+    subprocess.run(command_mkdir_home, shell=True)
+
+    command_mkdir_src = "mkdir {}/src".format(pitest_dir)
+    print_command(command_mkdir_src)
+    subprocess.run(command_mkdir_src, shell=True)
+
+    command_mkdir_src_main = "mkdir {}/src/main".format(pitest_dir)
+    print_command(command_mkdir_src_main)
+    subprocess.run(command_mkdir_src_main, shell=True)
+
+    command_mkdir_src_main_java = "mkdir {}/src/main/java".format(pitest_dir)
+    print_command(command_mkdir_src_main_java)
+    subprocess.run(command_mkdir_src_main_java, shell=True)
+
+    command_mkdir_src_test = "mkdir {}/src/test".format(pitest_dir)
+    print_command(command_mkdir_src_test)
+    subprocess.run(command_mkdir_src_test, shell=True)
+
+    command_mkdir_src_test_java = "mkdir {}/src/test/java".format(pitest_dir)
+    print_command(command_mkdir_src_test_java)
+    subprocess.run(command_mkdir_src_test_java, shell=True)
 
 def pitest_measure(pitest_dir, targetClasses, targetTests, class_dir, test_dir):
     generate_pitest_workdir(pitest_dir)
     edit_pit_pom('pit_pom.xml', targetClasses, targetTests, '{}/pom.xml'.format(pitest_dir))
-    subprocess.run('cp -r {}/* {}/src/main/java'.format(class_dir, pitest_dir), shell=True)
-    subprocess.run('cp -r {}/* {}/src/test/java'.format(test_dir, pitest_dir), shell=True)
+
+    command_copy_source = 'cp -r {}/* {}/src/main/java'.format(class_dir, pitest_dir)
+    print_command(command_copy_source)
+    subprocess.run(command_copy_source, shell=True)
+
+    command_copy_test = 'cp -r {}/* {}/src/test/java'.format(test_dir, pitest_dir)
+    print_command(command_copy_test)
+    subprocess.run(command_copy_test, shell=True)
+
     run_pitest('{}/'.format(pitest_dir))
 
 def copy_csv(file_path, file_name, all_report_dir):
-    print('cp {} {}/{}.csv'.format(file_path, all_report_dir, file_name))
-    subprocess.run('cp {} {}/{}.csv'.format(file_path, all_report_dir, file_name), shell=True)
+    command = 'cp {} {}/{}.csv'.format(file_path, all_report_dir, file_name)
+    print_command(command)
+    subprocess.run(command, shell=True)
 
 def copy_pitest_csv(name, workdir, all_report_dir):
-    subprocess.run("find . -name '*.csv' > sources.txt", cwd=workdir, shell=True)
+    command = "find . -name '*.csv' > sources.txt"
+    print_command(command, workdir)
+    subprocess.run(command, cwd=workdir, shell=True)
+
     with open('{}/sources.txt'.format(workdir)) as file:
         for line in file:
             file_path = '{}/{}'.format(workdir, line[2:-1])
@@ -137,7 +182,10 @@ class RunTestEPA(threading.Thread):
 
         # Resume the reports generated
         all_report_dir = '{}all_reports'.format(self.subdir)
-        subprocess.run('mkdir {}'.format(all_report_dir), shell=True)
+        command_mkdir_report = 'mkdir {}'.format(all_report_dir)
+        print_command(command_mkdir_report)
+        subprocess.run(command_mkdir_report, shell=True)
+
         copy_pitest_csv(self.name, self.generated_report_pitest_dir, all_report_dir)
         copy_csv('{}/statistics.csv'.format(self.generated_report_evosuite_dir), 'epacoverage_{}'.format(self.name), all_report_dir)
         make_report_resume(self.name, '{}/epacoverage_{}.csv'.format(all_report_dir, self.name), '{}/{}_jacoco.csv'.format(all_report_dir, self.name), '{}/{}_mutations.csv'.format(all_report_dir, self.name), '{}resume.csv'.format(self.subdir))
