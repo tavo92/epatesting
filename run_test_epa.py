@@ -5,8 +5,14 @@ import csv
 import xml.etree.ElementTree as ET
 import threading
 import os
+from enum import Enum
 
 from make_report_resume import make_report_resume
+
+class EpatestingMethod(Enum):
+    TESTGEN = 1
+    METRICS = 2
+    BOTH = 3
 
 def print_command(command, workdir=None):
     print('Executing command in shell:')
@@ -146,7 +152,7 @@ def copy_pitest_csv(name, workdir, all_report_dir):
 
 
 class RunTestEPA(threading.Thread):
-    def __init__(self, name, junit_jar, code_dir, instrumented_code_dir, original_code_dir, evosuite_classes, evosuite_jar_path, class_name, epa_path, criterion, search_budget, runid):
+    def __init__(self, name, junit_jar, code_dir, instrumented_code_dir, original_code_dir, evosuite_classes, evosuite_jar_path, class_name, epa_path, criterion, search_budget, runid, method):
         threading.Thread.__init__(self)
 
         self.subdir_testgen = 'results/testgen/{}/{}/{}/{}/'.format(name, search_budget, criterion.replace(':', '_').lower(), runid)
@@ -172,32 +178,34 @@ class RunTestEPA(threading.Thread):
         self.compiled_code_dir = '{}/{}compiled/code'.format(self.home_dir, self.subdir_testgen)
         self.compiled_original_code_dir = '{}/{}compiled/original'.format(self.home_dir, self.subdir_testgen)
         self.compiled_instrumented_code_dir = '{}/{}compiled/instrumented'.format(self.home_dir, self.subdir_testgen)
+        self.method = method
 
     def run(self):
-        # Compile code
-        compile_workdir(self.code_dir, self.evosuite_classes, self.compiled_code_dir)
-        compile_workdir(self.original_code_dir, self.evosuite_classes, self.compiled_original_code_dir)
-        compile_workdir(self.instrumented_code_dir, self.evosuite_classes, self.compiled_instrumented_code_dir)
+        if self.method in [EpatestingMethod.TESTGEN.value, EpatestingMethod.BOTH.value]:
+            print('GENERATING TESTS')
+            # Compile code
+            compile_workdir(self.code_dir, self.evosuite_classes, self.compiled_code_dir)
+            compile_workdir(self.original_code_dir, self.evosuite_classes, self.compiled_original_code_dir)
+            compile_workdir(self.instrumented_code_dir, self.evosuite_classes, self.compiled_instrumented_code_dir)
 
-        # Run Evosuite
-        run_evosuite(evosuite_jar_path=self.evosuite_jar_path, projectCP=self.compiled_code_dir, class_name=self.class_name, criterion=self.criterion, epa_path=self.epa_path, test_dir=self.generated_test_dir, search_budget=self.search_budget)
+            # Run Evosuite
+            run_evosuite(evosuite_jar_path=self.evosuite_jar_path, projectCP=self.compiled_code_dir, class_name=self.class_name, criterion=self.criterion, epa_path=self.epa_path, test_dir=self.generated_test_dir, search_budget=self.search_budget)
 
-        compile_test_workdir(self.generated_test_dir, self.code_dir, self.junit_jar)
+            compile_test_workdir(self.generated_test_dir, self.code_dir, self.junit_jar)
 
-        measure_evosuite(evosuite_jar_path=self.evosuite_jar_path, projectCP=self.compiled_instrumented_code_dir, testCP=self.generated_test_dir, class_name=self.class_name, epa_path=self.epa_path, report_dir=self.generated_report_evosuite_dir)
+        if self.method in [EpatestingMethod.METRICS.value, EpatestingMethod.BOTH.value]:
+            print('GENERATING METRICS')
+            measure_evosuite(evosuite_jar_path=self.evosuite_jar_path, projectCP=self.compiled_instrumented_code_dir, testCP=self.generated_test_dir, class_name=self.class_name, epa_path=self.epa_path, report_dir=self.generated_report_evosuite_dir)
 
-        # Run Pitest to measure
-        pitest_measure(self.generated_report_pitest_dir, self.class_name, "{}_ESTest".format(self.class_name), self.original_code_dir, self.generated_test_dir)
+            # Run Pitest to measure
+            pitest_measure(self.generated_report_pitest_dir, self.class_name, "{}_ESTest".format(self.class_name), self.original_code_dir, self.generated_test_dir)
 
-        # Clean directorys
-        subprocess.run('rm -r evosuite-report/ report/', shell=True)
+            # Resume the reports generated
+            all_report_dir = '{}all_reports'.format(self.subdir_metrics)
+            command_mkdir_report = 'mkdir {}'.format(all_report_dir)
+            print_command(command_mkdir_report)
+            subprocess.run(command_mkdir_report, shell=True)
 
-        # Resume the reports generated
-        all_report_dir = '{}all_reports'.format(self.subdir_metrics)
-        command_mkdir_report = 'mkdir {}'.format(all_report_dir)
-        print_command(command_mkdir_report)
-        subprocess.run(command_mkdir_report, shell=True)
-
-        copy_pitest_csv(self.name, self.generated_report_pitest_dir, all_report_dir)
-        copy_csv('{}/statistics.csv'.format(self.generated_report_evosuite_dir), 'epacoverage_{}'.format(self.name), all_report_dir)
-        make_report_resume(self.name, '{}/epacoverage_{}.csv'.format(all_report_dir, self.name), '{}/{}_jacoco.csv'.format(all_report_dir, self.name), '{}/{}_mutations.csv'.format(all_report_dir, self.name), '{}resume.csv'.format(self.subdir_metrics))
+            copy_pitest_csv(self.name, self.generated_report_pitest_dir, all_report_dir)
+            copy_csv('{}/statistics.csv'.format(self.generated_report_evosuite_dir), 'epacoverage_{}'.format(self.name), all_report_dir)
+            make_report_resume(self.name, '{}/epacoverage_{}.csv'.format(all_report_dir, self.name), '{}/{}_jacoco.csv'.format(all_report_dir, self.name), '{}/{}_mutations.csv'.format(all_report_dir, self.name), '{}resume.csv'.format(self.subdir_metrics))
