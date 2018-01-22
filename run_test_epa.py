@@ -84,10 +84,9 @@ def compile_test_workdir(workdir, subject_class, junit_jar):
     subprocess.run(command_compile, cwd=workdir, shell=True)
 
 def generate_pitest_workdir(pitest_dir):
-    # TODO: Hay que mover todo y trabajar con los directorios de la siguiente
-    # manera:
+    # To generate the pitest workdir we need the following hierachy:
     # pom.xml
-    # src/main/java/ < codigo que queremos testear
+    # src/main/java/ < source code we want to test
     # src/test/java/ < testsuite
     command_mkdir_home = "mkdir {}".format(pitest_dir)
     print_command(command_mkdir_home)
