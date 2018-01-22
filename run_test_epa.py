@@ -4,6 +4,7 @@ import subprocess
 import csv
 import xml.etree.ElementTree as ET
 import threading
+import os
 
 from make_report_resume import make_report_resume
 
@@ -52,7 +53,7 @@ def run_pitest(workdir):
     print_command(command, workdir)
     subprocess.run(command, cwd=workdir, shell=True)
 
-def compile_workdir(workdir, evosuite_classes):
+def compile_workdir(workdir, evosuite_classes, output_directory):
     ''' TODO:
     -d directory
 Set the destination directory for class files. The directory must already exist; javac will not create it. If a class is part of a package, javac puts the class file in a subdirectory reflecting the package name, creating directories as needed. For example, if you specify -d C:\myclasses and the class is called com.mypackage.MyClass, then the class file is called C:\myclasses\com\mypackage\MyClass.class.
@@ -65,7 +66,11 @@ Note: The directory specified by -d is not automatically added to your user clas
     print_command(command_find, workdir)
     subprocess.run(command_find, cwd=workdir, shell=True)
 
-    command_compile = "javac -classpath {} @sources.txt".format(evosuite_classes)
+    command_mkdir_output = 'mkdir -p {}'.format(output_directory)
+    print_command(command_mkdir_output)
+    subprocess.run(command_mkdir_output, shell=True)
+
+    command_compile = "javac -classpath {} -d {} @sources.txt".format(evosuite_classes, output_directory)
     print_command(command_compile, workdir)
     subprocess.run(command_compile, cwd=workdir, shell=True)
 
@@ -162,17 +167,23 @@ class RunTestEPA(threading.Thread):
         self.search_budget = search_budget
         self.runid = runid
 
+        self.home_dir = os.path.dirname(os.path.abspath(__file__))
+        self.compiled_code_dir = '{}/{}compiled/code'.format(self.home_dir, self.subdir)
+        self.compiled_original_code_dir = '{}/{}compiled/original'.format(self.home_dir, self.subdir)
+        self.compiled_instrumented_code_dir = '{}/{}compiled/instrumented'.format(self.home_dir, self.subdir)
+
     def run(self):
         # Compile code
-        compile_workdir(self.original_code_dir, self.evosuite_classes)
-        compile_workdir(self.instrumented_code_dir, self.evosuite_classes)
+        compile_workdir(self.code_dir, self.evosuite_classes, self.compiled_code_dir)
+        compile_workdir(self.original_code_dir, self.evosuite_classes, self.compiled_original_code_dir)
+        compile_workdir(self.instrumented_code_dir, self.evosuite_classes, self.compiled_instrumented_code_dir)
 
         # Run Evosuite
-        run_evosuite(evosuite_jar_path=self.evosuite_jar_path, projectCP=self.code_dir, class_name=self.class_name, criterion=self.criterion, epa_path=self.epa_path, test_dir=self.generated_test_dir, search_budget=self.search_budget)
+        run_evosuite(evosuite_jar_path=self.evosuite_jar_path, projectCP=self.compiled_code_dir, class_name=self.class_name, criterion=self.criterion, epa_path=self.epa_path, test_dir=self.generated_test_dir, search_budget=self.search_budget)
 
         compile_test_workdir(self.generated_test_dir, self.code_dir, self.junit_jar)
 
-        measure_evosuite(evosuite_jar_path=self.evosuite_jar_path, projectCP=self.instrumented_code_dir, testCP=self.generated_test_dir, class_name=self.class_name, epa_path=self.epa_path, report_dir=self.generated_report_evosuite_dir)
+        measure_evosuite(evosuite_jar_path=self.evosuite_jar_path, projectCP=self.compiled_instrumented_code_dir, testCP=self.generated_test_dir, class_name=self.class_name, epa_path=self.epa_path, report_dir=self.generated_report_evosuite_dir)
 
         # Run Pitest to measure
         pitest_measure(self.generated_report_pitest_dir, self.class_name, "{}_ESTest".format(self.class_name), self.original_code_dir, self.generated_test_dir)
