@@ -2,8 +2,6 @@ import argparse
 import configparser
 import subprocess
 
-from os import listdir
-
 from run_test_epa import RunTestEPA
 from make_report_resume import make_report_resume
 
@@ -78,7 +76,6 @@ class EPAConfig:
         return [tests_to_run[x:x+self.chunk_size] for x in range(0, len(tests_to_run), self.chunk_size)]
 
 if __name__ == '__main__':
-    ''' for testing
     config = EPAConfig()
 
     parser = argparse.ArgumentParser()
@@ -97,12 +94,3 @@ if __name__ == '__main__':
 
     # Clean directorys
     subprocess.run('rm -r evosuite-report/ report/', shell=True)
-    '''
-
-    def find_csv_filenames( path_to_dir, suffix=".csv" ):
-        filenames = listdir(path_to_dir)
-        return [ filename for filename in filenames if filename.endswith( suffix ) ]
-
-    filenames = find_csv_filenames("report/")
-    for name in filenames:
-      print(name)
