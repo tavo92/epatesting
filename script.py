@@ -2,8 +2,7 @@ import argparse
 import configparser
 import subprocess
 
-import os
-import glob
+from os import listdir
 
 from run_test_epa import RunTestEPA
 from make_report_resume import make_report_resume
@@ -100,8 +99,10 @@ if __name__ == '__main__':
     subprocess.run('rm -r evosuite-report/ report/', shell=True)
     '''
 
-    #path = ''
-    extension = 'csv'
-    #os.chdir(path)
-    result = [i for i in glob.glob('*.{}'.format(extension))]
-    print(result)
+    def find_csv_filenames( path_to_dir, suffix=".csv" ):
+        filenames = listdir(path_to_dir)
+        return [ filename for filename in filenames if filename.endswith( suffix ) ]
+
+    filenames = find_csv_filenames("report/")
+    for name in filenames:
+      print(name)
