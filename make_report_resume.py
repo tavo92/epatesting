@@ -52,8 +52,11 @@ def merge_all_resumes(all_resumes, output_file):
         writer.writeheader()
 
         for resume in all_resumes:
-            with open(resume, newline='') as csvfile:
-                render = csv.reader(csvfile)
-                header = next(render)
-                for row in reader:
-                    writer.writerow(row)
+            try:
+                with open(resume, newline='') as csvfile:
+                    reader = csv.reader(csvfile)
+                    header = next(reader)
+                    for row in reader:
+                        writer.writerow({'Class': row[0], 'EPA Coverage': row[1], 'Branch Coverage': row[2], 'Line Coverage': row[3], 'Mutation Coverage': row[4]});
+            except FileNotFoundError:
+                print("{} doesn't exists".format(resume))
