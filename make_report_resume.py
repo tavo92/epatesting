@@ -44,3 +44,16 @@ def make_report_resume(name, evosuite, jacoco, pit, output_file):
 
         writer.writeheader()
         writer.writerow(report_resume_row(name, evosuite, jacoco, pit))
+
+def merge_all_resumes(all_resumes, output_file):
+    with open(output_file, 'w', newline='') as csvfile:
+        fieldnames = ['Class', 'EPA Coverage', 'Branch Coverage', 'Line Coverage', 'Mutation Coverage']
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+        writer.writeheader()
+
+        for resume in all_resumes:
+            with open(resume, newline='') as csvfile:
+                render = csv.reader(csvfile)
+                header = next(render)
+                for row in reader:
+                    writer.writerow(row)
