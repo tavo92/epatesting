@@ -3,7 +3,7 @@ import configparser
 import subprocess
 
 from run_test_epa import RunTestEPA
-from make_report_resume import make_report_resume
+from make_report_resume import make_report_resume, merge_all_resumes
 
 
 class Subject:
@@ -86,11 +86,15 @@ if __name__ == '__main__':
     # Run all the tests
     config.read_config_file(args.config_file, args.method)
     test_chunks = config.read_runs_file('config2.ini')
+    all_resumes = []
     for chunk in test_chunks:
         for test in chunk:
             test.start()
         for test in chunk:
             test.join()
+            all_resumes.append('{}resume.csv'.format(test.subdir_metrics))
+    
+    merge_all_resumes(all_resumes, 'all_resumes.csv')
 
     # Clean directorys
     subprocess.run('rm -r evosuite-report/ report/', shell=True)
