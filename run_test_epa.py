@@ -72,12 +72,12 @@ def compile_workdir(workdir, evosuite_classes, output_directory):
     print_command(command_compile, workdir)
     subprocess.check_output(command_compile, cwd=workdir, shell=True)
 
-def compile_test_workdir(workdir, subject_class, junit_jar):
+def compile_test_workdir(workdir, subject_class, junit_jar, evosuite_classes):
     command_find = "find . -name '*.java' > sources.txt"
     print_command(command_find, workdir)
     subprocess.check_output(command_find, cwd=workdir, shell=True)
 
-    command_compile = "javac -classpath {}:{} @sources.txt".format(junit_jar, subject_class)
+    command_compile = "javac -classpath {}:{}:{} @sources.txt".format(junit_jar, subject_class, evosuite_classes)
     print_command(command_compile, workdir)
     subprocess.check_output(command_compile, cwd=workdir, shell=True)
 
@@ -183,7 +183,7 @@ class RunTestEPA(threading.Thread):
             # Run Evosuite
             run_evosuite(evosuite_jar_path=self.evosuite_jar_path, projectCP=self.compiled_code_dir, class_name=self.class_name, criterion=self.criterion, epa_path=self.epa_path, test_dir=self.generated_test_dir, search_budget=self.search_budget)
 
-            compile_test_workdir(self.generated_test_dir, self.code_dir, self.junit_jar)
+            compile_test_workdir(self.generated_test_dir, self.code_dir, self.junit_jar, self.evosuite_classes)
 
         if self.method in [EpatestingMethod.METRICS.value, EpatestingMethod.BOTH.value]:
             print('GENERATING METRICS')
