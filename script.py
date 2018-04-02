@@ -86,11 +86,15 @@ if __name__ == '__main__':
     # Run all the tests
     config.read_config_file(args.config_file, args.method)
     test_chunks = config.read_runs_file('config2.ini')
+    all_metrics = []
     for chunk in test_chunks:
         for test in chunk:
             test.start()
         for test in chunk:
             test.join()
+            all_metrics.append('{}resume.csv'.format(test.subdir_metrics))
+
+    print(all_metrics)
 
     # Clean directorys
     subprocess.run('rm -r evosuite-report/ report/', shell=True)
