@@ -44,7 +44,7 @@ class EPAConfig:
 
     def read_runs_file(self, file):
         # File format:
-        # [SUBJECTS]*[BUDGETS]*[CRITERIOS]*[METHOD]*[REP]
+        # [SUBJECTS]*[BUDGETS]*[CRITERIOS]*METHOD*REP
         def parse_runs_values(values):
             # Remove brackets
             values = values[1:-1]
