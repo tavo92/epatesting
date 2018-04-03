@@ -25,6 +25,7 @@ class EPAConfig:
         self.junit_jar = config['DEFAULT']['JUnitJAR']
         self.evosuite_classes = config['DEFAULT']['EvoSuiteClasses']
         self.evosuite_jar_path = config['DEFAULT']['EvoSuiteJARPath']
+        self.evosuite_runtime_jar_path  = config['DEFAULT']['EvoSuiteRuntimeJARPath']
         self.chunk_size = int(config['DEFAULT']['ChunkSize'])
 
         # Reads each section witch defines a run
@@ -70,7 +71,7 @@ class EPAConfig:
                     for criterion in criterions:
                         for __ in range(rep):
                             subject = self.subjects[subject_name]
-                            tests_to_run.append(RunTestEPA(name=subject.name, junit_jar=self.junit_jar, code_dir=subject.code_dir, instrumented_code_dir=subject.instrumented_code_dir, original_code_dir=subject.original_code_dir, evosuite_classes=self.evosuite_classes, evosuite_jar_path=self.evosuite_jar_path, class_name=subject.class_name, epa_path=subject.epa_path, criterion=criterion, search_budget=search_budget, runid=runid, method=method))
+                            tests_to_run.append(RunTestEPA(name=subject.name, junit_jar=self.junit_jar, code_dir=subject.code_dir, instrumented_code_dir=subject.instrumented_code_dir, original_code_dir=subject.original_code_dir, evosuite_classes=self.evosuite_classes, evosuite_jar_path=self.evosuite_jar_path, evosuite_runtime_jar_path=self.evosuite_runtime_jar_path, class_name=subject.class_name, epa_path=subject.epa_path, criterion=criterion, search_budget=search_budget, runid=runid, method=method))
                             runid += 1
 
         return [tests_to_run[x:x+self.chunk_size] for x in range(0, len(tests_to_run), self.chunk_size)]

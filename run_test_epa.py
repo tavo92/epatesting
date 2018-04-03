@@ -72,12 +72,12 @@ def compile_workdir(workdir, evosuite_classes, output_directory):
     print_command(command_compile, workdir)
     subprocess.check_output(command_compile, cwd=workdir, shell=True)
 
-def compile_test_workdir(workdir, subject_class, junit_jar, evosuite_classes):
+def compile_test_workdir(workdir, subject_class, junit_jar, evosuite_classes, evosuite_runtime_jar_path):
     command_find = "find . -name '*.java' > sources.txt"
     print_command(command_find, workdir)
     subprocess.check_output(command_find, cwd=workdir, shell=True)
 
-    command_compile = "javac -classpath {}:{}:{} @sources.txt".format(junit_jar, subject_class, evosuite_classes)
+    command_compile = "javac -classpath {}:{}:{}:{} @sources.txt".format(junit_jar, subject_class, evosuite_classes, evosuite_runtime_jar_path)
     print_command(command_compile, workdir)
     subprocess.check_output(command_compile, cwd=workdir, shell=True)
 
@@ -144,7 +144,7 @@ def copy_pitest_csv(name, workdir, all_report_dir):
 
 
 class RunTestEPA(threading.Thread):
-    def __init__(self, name, junit_jar, code_dir, instrumented_code_dir, original_code_dir, evosuite_classes, evosuite_jar_path, class_name, epa_path, criterion, search_budget, runid, method):
+    def __init__(self, name, junit_jar, code_dir, instrumented_code_dir, original_code_dir, evosuite_classes, evosuite_jar_path, evosuite_runtime_jar_path, class_name, epa_path, criterion, search_budget, runid, method):
         threading.Thread.__init__(self)
 
         self.subdir_testgen = 'results/testgen/{}/{}/{}/{}/'.format(name, search_budget, criterion.replace(':', '_').lower(), runid)
@@ -157,6 +157,7 @@ class RunTestEPA(threading.Thread):
         self.original_code_dir = original_code_dir
         self.evosuite_classes = evosuite_classes
         self.evosuite_jar_path = evosuite_jar_path
+        self.evosuite_runtime_jar_path = evosuite_runtime_jar_path
         self.class_name = class_name
         self.epa_path = epa_path
         self.criterion = criterion
@@ -183,7 +184,7 @@ class RunTestEPA(threading.Thread):
             # Run Evosuite
             run_evosuite(evosuite_jar_path=self.evosuite_jar_path, projectCP=self.compiled_code_dir, class_name=self.class_name, criterion=self.criterion, epa_path=self.epa_path, test_dir=self.generated_test_dir, search_budget=self.search_budget)
 
-            compile_test_workdir(self.generated_test_dir, self.code_dir, self.junit_jar, self.evosuite_classes)
+            compile_test_workdir(self.generated_test_dir, self.code_dir, self.junit_jar, self.evosuite_classes, self.evosuite_runtime_jar_path)
 
         if self.method in [EpatestingMethod.METRICS.value, EpatestingMethod.BOTH.value]:
             print('GENERATING METRICS')
