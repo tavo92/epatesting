@@ -18,7 +18,7 @@ def read_jacoco_csv(name, file_path):
                 line_missed = float(row['LINE_MISSED'])
                 line_covered = float(row['LINE_COVERED'])
                 return branch_covered/(branch_missed+branch_covered), line_covered/(line_missed+line_covered)
-    return coverage
+    return None
 
 def read_pit_csv(file_path):
     killed = 0
