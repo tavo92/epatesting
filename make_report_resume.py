@@ -7,12 +7,18 @@ def read_evosuite_csv(file_path):
             coverage = row['Coverage']
     return coverage
 
-def read_jacoco_csv(name, file_path):
+def read_jacoco_csv(target_class, file_path):
     with open(file_path, newline='') as csvfile:
         reader = csv.DictReader(csvfile)
         for row in reader:
+            package_name = row['PACKAGE']
             class_name = row['CLASS']
-            if class_name == name:
+            if package_name.strip() != "":
+                fully_qualified_class_name = "{}.{}".format(package_name, class_name)
+            else:
+                fully_qualified_class_name = class_name
+                
+            if fully_qualified_class_name== target_class:
                 branch_missed = float(row['BRANCH_MISSED'])
                 branch_covered = float(row['BRANCH_COVERED'])
                 line_missed = float(row['LINE_MISSED'])
@@ -31,19 +37,19 @@ def read_pit_csv(file_path):
                 killed += 1
     return killed/total
 
-def report_resume_row(name, evosuite, jacoco, pit):
+def report_resume_row(target_class, evosuite, jacoco, pit):
     epa_coverage = read_evosuite_csv(evosuite)
-    branch_coverage, line_coverage = read_jacoco_csv(name, jacoco)
+    branch_coverage, line_coverage = read_jacoco_csv(target_class, jacoco)
     mutation_coverage = read_pit_csv(pit)
-    return {'Class': name, 'EPA Coverage': epa_coverage, 'Branch Coverage': branch_coverage, 'Line Coverage': line_coverage, 'Mutation Coverage': mutation_coverage}
+    return {'Class': target_class, 'EPA Coverage': epa_coverage, 'Branch Coverage': branch_coverage, 'Line Coverage': line_coverage, 'Mutation Coverage': mutation_coverage}
 
-def make_report_resume(name, evosuite, jacoco, pit, output_file):
+def make_report_resume(target_class, evosuite, jacoco, pit, output_file):
     with open(output_file, 'w', newline='') as csvfile:
         fieldnames = ['Class', 'EPA Coverage', 'Branch Coverage', 'Line Coverage', 'Mutation Coverage']
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
 
         writer.writeheader()
-        writer.writerow(report_resume_row(name, evosuite, jacoco, pit))
+        writer.writerow(report_resume_row(target_class, evosuite, jacoco, pit))
 
 def merge_all_resumes(all_resumes, output_file):
     with open(output_file, 'w', newline='') as csvfile:
