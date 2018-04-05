@@ -179,7 +179,7 @@ def pitest_measure(pitest_dir, targetClasses, targetTests, class_dir, test_dir):
     # Si existe el directorio lo elimino (sino tira error shutil.copytree
     if os.path.exists(pitest_dir_src_test_java):
         shutil.rmtree(pitest_dir_src_test_java)
-    shutil.copytree(class_dir, pitest_dir_src_test_java)
+    shutil.copytree(test_dir, pitest_dir_src_test_java)
     # subprocess.check_output(command_copy_test, shell=True)
 
     run_pitest('{}/'.format(pitest_dir))
