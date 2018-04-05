@@ -4,6 +4,7 @@ import subprocess
 
 from run_test_epa import RunTestEPA
 from make_report_resume import make_report_resume, merge_all_resumes
+import os
 
 
 class Subject:
@@ -98,7 +99,7 @@ if __name__ == '__main__':
             test.start()
         for test in chunk:
             test.join()
-            all_resumes.append('{}resume.csv'.format(test.subdir_metrics))
+            all_resumes.append(os.path.join(test.subdir_metrics,'resume.csv'))
     
     merge_all_resumes(all_resumes, 'all_resumes.csv')
     
