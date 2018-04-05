@@ -7,6 +7,7 @@ from make_report_resume import make_report_resume, merge_all_resumes
 
 
 class Subject:
+
     def __init__(self, name, code_dir, instrumented_code_dir, original_code_dir, class_name, epa_path):
         self.name = name
         self.code_dir = code_dir
@@ -17,6 +18,7 @@ class Subject:
 
 
 class EPAConfig:
+
     def read_config_file(self, config_file, method):
         config = configparser.ConfigParser()
         config.read(config_file)
@@ -25,12 +27,14 @@ class EPAConfig:
         self.junit_jar = config['DEFAULT']['JUnitJAR']
         self.evosuite_classes = config['DEFAULT']['EvoSuiteClasses']
         self.evosuite_jar_path = config['DEFAULT']['EvoSuiteJARPath']
-        self.evosuite_runtime_jar_path  = config['DEFAULT']['EvoSuiteRuntimeJARPath']
+        self.evosuite_runtime_jar_path = config['DEFAULT']['EvoSuiteRuntimeJARPath']
+        self.results_dir_name = config['DEFAULT']['ResultsDirName']
+        
         self.chunk_size = int(config['DEFAULT']['ChunkSize'])
 
         # Reads each section witch defines a run
-        #tests_to_run = []
-        #runid = 0
+        # tests_to_run = []
+        # runid = 0
         self.subjects = {}
 
         for section in config.sections():
@@ -42,8 +46,8 @@ class EPAConfig:
             epa_path = config[section]['EPAPath']
             self.subjects[section] = Subject(name, code_dir, instrumented_code_dir, original_code_dir, class_name, epa_path)
 
-
     def read_runs_file(self, file):
+
         # File format:
         # [SUBJECTS]*[BUDGETS]*[CRITERIOS]*METHOD*REP
         def parse_runs_values(values):
@@ -71,10 +75,11 @@ class EPAConfig:
                     for criterion in criterions:
                         for __ in range(rep):
                             subject = self.subjects[subject_name]
-                            tests_to_run.append(RunTestEPA(name=subject.name, junit_jar=self.junit_jar, code_dir=subject.code_dir, instrumented_code_dir=subject.instrumented_code_dir, original_code_dir=subject.original_code_dir, evosuite_classes=self.evosuite_classes, evosuite_jar_path=self.evosuite_jar_path, evosuite_runtime_jar_path=self.evosuite_runtime_jar_path, class_name=subject.class_name, epa_path=subject.epa_path, criterion=criterion, search_budget=search_budget, runid=runid, method=method))
+                            tests_to_run.append(RunTestEPA(name=subject.name, junit_jar=self.junit_jar, code_dir=subject.code_dir, instrumented_code_dir=subject.instrumented_code_dir, original_code_dir=subject.original_code_dir, evosuite_classes=self.evosuite_classes, evosuite_jar_path=self.evosuite_jar_path, evosuite_runtime_jar_path=self.evosuite_runtime_jar_path, class_name=subject.class_name, epa_path=subject.epa_path, criterion=criterion, search_budget=search_budget, runid=runid, method=method, results_dir_name=self.results_dir_name))
                             runid += 1
 
-        return [tests_to_run[x:x+self.chunk_size] for x in range(0, len(tests_to_run), self.chunk_size)]
+        return [tests_to_run[x:x + self.chunk_size] for x in range(0, len(tests_to_run), self.chunk_size)]
+
 
 if __name__ == '__main__':
     config = EPAConfig()

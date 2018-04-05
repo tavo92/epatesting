@@ -11,10 +11,12 @@ from enum import Enum
 from make_report_resume import make_report_resume
 from sys import platform
 
+
 class EpatestingMethod(Enum):
     TESTGEN = 1
     METRICS = 2
     BOTH = 3
+
 
 def print_command(command, workdir=None):
     print('Executing command in shell:')
@@ -22,10 +24,12 @@ def print_command(command, workdir=None):
         print('In workdir: {}'.format(workdir))
     print(command)
 
+
 def run_evosuite(evosuite_jar_path, projectCP, class_name, criterion, epa_path, search_budget, test_dir='test', report_dir='report'):
     command = 'java -jar {}evosuite-master-1.0.4-SNAPSHOT.jar -projectCP {} -class {} -criterion {} -Dsearch_budget={} -Djunit_allow_restricted_libraries=true -Dp_functional_mocking=\"0.0\" -Dp_reflection_on_private=\"0.0\" -Duse_separate_classloader=\"false\" -Dwrite_covered_goals_file=\"true\" -Dwrite_all_goals_file=\"true\" -Dprint_missed_goals=\"true\" -Dtest_dir={} -Dreport_dir={} -Depa_xml_path={} -Dno_runtime_dependency=\"true\" -Dassertions=\"false\"'.format(evosuite_jar_path, projectCP, class_name, criterion, search_budget, test_dir, report_dir, epa_path)
     print_command(command)
     subprocess.check_output(command, shell=True)
+
 
 def measure_evosuite(evosuite_jar_path, projectCP, testCP, class_name, epa_path, report_dir):
     sep = ";" if (platform == "win32") else ":"
@@ -33,16 +37,20 @@ def measure_evosuite(evosuite_jar_path, projectCP, testCP, class_name, epa_path,
     print_command(command)
     subprocess.check_output(command, shell=True)
 
+
 def edit_pit_pom(file_path, targetClasses, targetTests, output_file):
+
     def find_by_subtag(node, subtag):
         for child in node:
             if subtag in child.tag:
                 return child
+
     def find_pit_plugin(plugins):
         for plugin in plugins:
             for child in plugin:
                 if "groupId" in child.tag and child.text == "org.pitest":
                     return plugin
+
     tree = ET.parse(file_path)
     root = tree.getroot()
     build = find_by_subtag(root, "build")
@@ -57,28 +65,30 @@ def edit_pit_pom(file_path, targetClasses, targetTests, output_file):
     ET.register_namespace('xsi', "http://www.w3.org/2001/XMLSchema-instance")
     tree.write(output_file, default_namespace="")
 
+
 def run_pitest(workdir):
     command = "mvn clean install org.pitest:pitest-maven:mutationCoverage"
     print_command(command, workdir)
     subprocess.check_output(command, cwd=workdir, shell=True)
 
+
 def compile_workdir(workdir, evosuite_classes, output_directory):
-    command_win  = "for /f %i in ('FORFILES /S /M *.java /C \"CMD /C ECHO @relpath\"') do @echo %~i >> sources.txt"
+    command_win = "for /f %i in ('FORFILES /S /M *.java /C \"CMD /C ECHO @relpath\"') do @echo %~i >> sources.txt"
     command_unix = "find . -name '*.java' > sources.txt"  
     command_find = command_win if (platform == "win32") else command_unix 
     
-    if (platform == "win32" and os.path.isfile(os.path.join(workdir,"sources.txt"))):
-        os.remove(os.path.join(workdir,"sources.txt"))
+    if (platform == "win32" and os.path.isfile(os.path.join(workdir, "sources.txt"))):
+        os.remove(os.path.join(workdir, "sources.txt"))
         
     print_command(command_find, workdir)
     subprocess.check_output(command_find, cwd=workdir, shell=True)
 
-    #command_mkdir_output_win = 'mkdir {}'.format(output_directory)
-    #command_mkdir_output_unix = 'mkdir -p {}'.format(output_directory)
-    #command_mkdir_output = command_mkdir_output_win if (platform == "win32") else command_mkdir_output_unix
-    #os.mkdirs("")
+    # command_mkdir_output_win = 'mkdir {}'.format(output_directory)
+    # command_mkdir_output_unix = 'mkdir -p {}'.format(output_directory)
+    # command_mkdir_output = command_mkdir_output_win if (platform == "win32") else command_mkdir_output_unix
+    # os.mkdirs("")
     print_command("mkdir {}".format(output_directory))
-    #subprocess.check_output(command_mkdir_output, shell=True)
+    # subprocess.check_output(command_mkdir_output, shell=True)
     if not os.path.exists(output_directory):
         os.makedirs(output_directory)
 
@@ -86,13 +96,14 @@ def compile_workdir(workdir, evosuite_classes, output_directory):
     print_command(command_compile, workdir)
     subprocess.check_output(command_compile, cwd=workdir, shell=True)
 
+
 def compile_test_workdir(workdir, subject_class, junit_jar, evosuite_classes, evosuite_runtime_jar_path):
-    command_win  = "for /f %i in ('FORFILES /S /M *.java /C \"CMD /C ECHO @relpath\"') do @echo %~i >> sources.txt"
+    command_win = "for /f %i in ('FORFILES /S /M *.java /C \"CMD /C ECHO @relpath\"') do @echo %~i >> sources.txt"
     command_unix = "find . -name '*.java' > sources.txt"  
     command_find = command_win if (platform == "win32") else command_unix
     
-    if (platform == "win32" and os.path.isfile(os.path.join(workdir,"sources.txt"))):
-        os.remove(os.path.join(workdir,"sources.txt"))
+    if (platform == "win32" and os.path.isfile(os.path.join(workdir, "sources.txt"))):
+        os.remove(os.path.join(workdir, "sources.txt"))
     
     print_command(command_find, workdir)
     subprocess.check_output(command_find, cwd=workdir, shell=True)
@@ -101,6 +112,7 @@ def compile_test_workdir(workdir, subject_class, junit_jar, evosuite_classes, ev
     command_compile = "javac -classpath {}{}{}{}{}{}{} @sources.txt".format(junit_jar, sep, subject_class, sep, evosuite_classes, sep, evosuite_runtime_jar_path)
     print_command(command_compile, workdir)
     subprocess.check_output(command_compile, cwd=workdir, shell=True)
+
 
 def generate_pitest_workdir(pitest_dir):
     # To generate the pitest workdir we need the following hierachy:
@@ -111,85 +123,88 @@ def generate_pitest_workdir(pitest_dir):
     print_command(command_mkdir_home)
     if not os.path.exists(pitest_dir):
         os.makedirs(pitest_dir)
-    #subprocess.check_output(command_mkdir_home, shell=True)
-    pitest_dir_src = os.path.join(pitest_dir,"src");
+    # subprocess.check_output(command_mkdir_home, shell=True)
+    pitest_dir_src = os.path.join(pitest_dir, "src");
     command_mkdir_src = "mkdir {}".format(pitest_dir_src)
     print_command(command_mkdir_src)
-    #subprocess.check_output(command_mkdir_src, shell=True)
+    # subprocess.check_output(command_mkdir_src, shell=True)
     if not os.path.exists(pitest_dir_src):
         os.makedirs(pitest_dir_src)
 
-    pitest_dir_src_main = os.path.join(pitest_dir,"src", "main");
+    pitest_dir_src_main = os.path.join(pitest_dir, "src", "main");
     command_mkdir_src_main = "mkdir {}".format(pitest_dir_src_main)
     print_command(command_mkdir_src_main)
-    #subprocess.check_output(command_mkdir_src_main, shell=True)
+    # subprocess.check_output(command_mkdir_src_main, shell=True)
     if not os.path.exists(pitest_dir_src_main):
         os.makedirs(pitest_dir_src_main)
 
-    pitest_dir_src_main_java = os.path.join(pitest_dir,"src","main","java")
+    pitest_dir_src_main_java = os.path.join(pitest_dir, "src", "main", "java")
     command_mkdir_src_main_java = "mkdir {}".format(pitest_dir_src_main_java)
     print_command(command_mkdir_src_main_java)
-    #subprocess.check_output(command_mkdir_src_main_java, shell=True)
+    # subprocess.check_output(command_mkdir_src_main_java, shell=True)
     if not os.path.exists(pitest_dir_src_main_java):
         os.makedirs(pitest_dir_src_main_java)
     
-    pitest_dir_src_test = os.path.join(pitest_dir,"src","test")
+    pitest_dir_src_test = os.path.join(pitest_dir, "src", "test")
     command_mkdir_src_test = "mkdir {}".format(pitest_dir_src_test)
     print_command(command_mkdir_src_test)
-    #subprocess.check_output(command_mkdir_src_test, shell=True)
+    # subprocess.check_output(command_mkdir_src_test, shell=True)
     if not os.path.exists(pitest_dir_src_test):
         os.makedirs(pitest_dir_src_test)
         
-    pitest_dir_src_test_java = os.path.join(pitest_dir,"src","test","java")        
+    pitest_dir_src_test_java = os.path.join(pitest_dir, "src", "test", "java")        
     command_mkdir_src_test_java = "mkdir {}".format(pitest_dir_src_test_java)
     print_command(command_mkdir_src_test_java)
-    #subprocess.check_output(command_mkdir_src_test_java, shell=True)
+    # subprocess.check_output(command_mkdir_src_test_java, shell=True)
     if not os.path.exists(pitest_dir_src_test_java):
         os.makedirs(pitest_dir_src_test_java)
 
+
 def pitest_measure(pitest_dir, targetClasses, targetTests, class_dir, test_dir):
     generate_pitest_workdir(pitest_dir)
-    edit_pit_pom('pit_pom.xml', targetClasses, targetTests, os.path.join(pitest_dir,"pom.xml"))
+    edit_pit_pom('pit_pom.xml', targetClasses, targetTests, os.path.join(pitest_dir, "pom.xml"))
 
-    pitest_dir_src_main_java = os.path.join(pitest_dir,"src","main","java")
+    pitest_dir_src_main_java = os.path.join(pitest_dir, "src", "main", "java")
     command_copy_source = 'cp -r {}/* {}'.format(class_dir, pitest_dir_src_main_java)
     print_command(command_copy_source)
     # Si existe el directorio lo elimino (sino tira error shutil.copytree
     if os.path.exists(pitest_dir_src_main_java):
         shutil.rmtree(pitest_dir_src_main_java)
     shutil.copytree(class_dir, pitest_dir_src_main_java)
-    #subprocess.check_output(command_copy_source, shell=True)
+    # subprocess.check_output(command_copy_source, shell=True)
 
-    pitest_dir_src_test_java = os.path.join(pitest_dir,"src","test","java")
+    pitest_dir_src_test_java = os.path.join(pitest_dir, "src", "test", "java")
     command_copy_test = 'cp -r {}/* {}'.format(test_dir, pitest_dir)
     print_command(command_copy_test)
     # Si existe el directorio lo elimino (sino tira error shutil.copytree
     if os.path.exists(pitest_dir_src_test_java):
         shutil.rmtree(pitest_dir_src_test_java)
     shutil.copytree(class_dir, pitest_dir_src_test_java)
-    #subprocess.check_output(command_copy_test, shell=True)
+    # subprocess.check_output(command_copy_test, shell=True)
 
     run_pitest('{}/'.format(pitest_dir))
 
+
 def copy_csv(file_path, file_name, all_report_dir):
-    dest = os.path.join(all_report_dir,"{}.csv".format(file_name))
+    dest = os.path.join(all_report_dir, "{}.csv".format(file_name))
     command = 'cp {} {}'.format(file_path, dest)
     print_command(command)
-    #shutil.copy(file_path, dest)
+    # shutil.copy(file_path, dest)
     subprocess.check_output(command, shell=True)
 
+
 def copy_pitest_csv(name, workdir, all_report_dir):
-    command_win  = "for /f %i in ('FORFILES /S /M *.csv /C \"CMD /C ECHO @relpath\"') do @echo %~i >> sources.txt"
+    command_win = "for /f %i in ('FORFILES /S /M *.csv /C \"CMD /C ECHO @relpath\"') do @echo %~i >> sources.txt"
     command_unix = "find . -name '*.csv' > sources.txt"  
     command = command_win if (platform == "win32") else command_unix
     print_command(command, workdir)
-    if (platform == "win32" and os.path.isfile(os.path.join(workdir,"sources.txt"))):
-        os.remove(os.path.join(workdir,"sources.txt"))
+    if (platform == "win32" and os.path.isfile(os.path.join(workdir, "sources.txt"))):
+        os.remove(os.path.join(workdir, "sources.txt"))
     subprocess.check_output(command, cwd=workdir, shell=True)
 
     with open(os.path.join(workdir, "sources.txt")) as file:
         for line in file:
-            file_path = os.path.join(workdir,line[2:-1])
+            file_path = os.path.join(workdir, line[2:-1])
             if 'mutations' in line:
                 copy_csv(file_path, '{}_mutations'.format(name), all_report_dir)
             elif 'jacoco' in line:
@@ -197,11 +212,12 @@ def copy_pitest_csv(name, workdir, all_report_dir):
 
 
 class RunTestEPA(threading.Thread):
-    def __init__(self, name, junit_jar, code_dir, instrumented_code_dir, original_code_dir, evosuite_classes, evosuite_jar_path, evosuite_runtime_jar_path, class_name, epa_path, criterion, search_budget, runid, method):
+
+    def __init__(self, name, junit_jar, code_dir, instrumented_code_dir, original_code_dir, evosuite_classes, evosuite_jar_path, evosuite_runtime_jar_path, class_name, epa_path, criterion, search_budget, runid, method, results_dir_name):
         threading.Thread.__init__(self)
 
-        self.subdir_testgen = os.path.join("results","testgen",name,search_budget,criterion.replace(':', '_').lower(),"{}".format(runid))
-        self.subdir_metrics = os.path.join("results","metrics",name,search_budget,criterion.replace(':', '_').lower(),"{}".format(runid))
+        self.subdir_testgen = os.path.join(results_dir_name, "testgen", name, search_budget, criterion.replace(':', '_').lower(), "{}".format(runid))
+        self.subdir_metrics = os.path.join(results_dir_name, "metrics", name, search_budget, criterion.replace(':', '_').lower(), "{}".format(runid))
 
         self.name = name
         self.junit_jar = junit_jar
@@ -214,16 +230,16 @@ class RunTestEPA(threading.Thread):
         self.class_name = class_name
         self.epa_path = epa_path
         self.criterion = criterion
-        self.generated_test_dir = '{}test'.format(self.subdir_testgen)
-        self.generated_report_evosuite_dir = '{}report_evosuite'.format(self.subdir_metrics)
-        self.generated_report_pitest_dir = '{}report_pitest'.format(self.subdir_metrics)
+        self.generated_test_dir = os.path.join(self.subdir_testgen, 'test')
+        self.generated_report_evosuite_dir = os.path.join(self.subdir_metrics, 'report_evosuite')
+        self.generated_report_pitest_dir = os.path.join(self.subdir_metrics, 'report_pitest')
         self.search_budget = search_budget
         self.runid = runid
 
         self.home_dir = os.path.dirname(os.path.abspath(__file__))
-        self.compiled_code_dir = os.path.join(self.home_dir,self.subdir_testgen,"compiled","code")
-        self.compiled_original_code_dir = os.path.join(self.home_dir, self.subdir_testgen,"compiled","original")
-        self.compiled_instrumented_code_dir = os.path.join(self.home_dir, self.subdir_testgen,"compiled","instrumented")
+        self.compiled_code_dir = os.path.join(self.home_dir, self.subdir_testgen, "compiled", "code")
+        self.compiled_original_code_dir = os.path.join(self.home_dir, self.subdir_testgen, "compiled", "original")
+        self.compiled_instrumented_code_dir = os.path.join(self.home_dir, self.subdir_testgen, "compiled", "instrumented")
         self.method = method
 
     def run(self):
@@ -247,21 +263,21 @@ class RunTestEPA(threading.Thread):
             pitest_measure(self.generated_report_pitest_dir, self.class_name, "{}_ESTest".format(self.class_name), self.original_code_dir, self.generated_test_dir)
 
             # Resume the reports generated
-            all_report_dir = '{}all_reports'.format(self.subdir_metrics)
+            all_report_dir = os.path.join(self.subdir_metrics, 'all_reports')
             command_mkdir_report = 'mkdir {}'.format(all_report_dir)
             print_command(command_mkdir_report)
             if not os.path.exists(all_report_dir):
                 os.makedirs(all_report_dir)
-            #subprocess.check_output(command_mkdir_report, shell=True)
+            # subprocess.check_output(command_mkdir_report, shell=True)
 
             copy_pitest_csv(self.name, self.generated_report_pitest_dir, all_report_dir)
             
-            statistics_csv = os.path.join(self.generated_report_evosuite_dir,"statistics.csv")
+            statistics_csv = os.path.join(self.generated_report_evosuite_dir, "statistics.csv")
             copy_csv(statistics_csv, 'epacoverage_{}'.format(self.name), all_report_dir)
             
-            epacoverage_csv = os.path.join(all_report_dir,"epacoverage_{}.csv".format(self.name))
-            jacoco_csv = os.path.join(all_report_dir,"{}_jacoco.csv".format(self.name))
-            mutations_csv = os.path.join(all_report_dir,"{}_mutations.csv".format(self.name))
+            epacoverage_csv = os.path.join(all_report_dir, "epacoverage_{}.csv".format(self.name))
+            jacoco_csv = os.path.join(all_report_dir, "{}_jacoco.csv".format(self.name))
+            mutations_csv = os.path.join(all_report_dir, "{}_mutations.csv".format(self.name))
             resume_csv = '{}resume.csv'.format(self.subdir_metrics)
             make_report_resume(self.class_name, epacoverage_csv, jacoco_csv, mutations_csv, resume_csv)
-            #make_report_resume(self.class_name, , , , '{}resume.csv'.format(self.subdir_metrics))
+            # make_report_resume(self.class_name, , , , '{}resume.csv'.format(self.subdir_metrics))
