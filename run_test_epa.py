@@ -72,46 +72,54 @@ def run_pitest(workdir):
     subprocess.check_output(command, cwd=workdir, shell=True)
 
 
+lock = threading.Lock()
+def lock_if_windows():
+    if(platform == "win32"):
+        lock.acquire()
+
+def release_if_windows():
+    if(platform == "win32"):
+        lock.release()
+
+
 def compile_workdir(workdir, evosuite_classes, output_directory):
-    command_win = "for /f %i in ('FORFILES /S /M *.java /C \"CMD /C ECHO @relpath\"') do @echo %~i >> sources.txt"
+    command_win = "FORFILES /S /M *.java /C \"CMD /C echo|set /p=@relpath & echo:\" > sources.txt"
     command_unix = "find . -name '*.java' > sources.txt"  
     command_find = command_win if (platform == "win32") else command_unix 
-    
-    if (platform == "win32" and os.path.isfile(os.path.join(workdir, "sources.txt"))):
-        os.remove(os.path.join(workdir, "sources.txt"))
         
     print_command(command_find, workdir)
+    
+    lock_if_windows()
     subprocess.check_output(command_find, cwd=workdir, shell=True)
+    release_if_windows()
 
-    # command_mkdir_output_win = 'mkdir {}'.format(output_directory)
-    # command_mkdir_output_unix = 'mkdir -p {}'.format(output_directory)
-    # command_mkdir_output = command_mkdir_output_win if (platform == "win32") else command_mkdir_output_unix
-    # os.mkdirs("")
     print_command("mkdir {}".format(output_directory))
-    # subprocess.check_output(command_mkdir_output, shell=True)
     if not os.path.exists(output_directory):
         os.makedirs(output_directory)
 
     command_compile = "javac -classpath {} -d {} @sources.txt".format(evosuite_classes, output_directory)
     print_command(command_compile, workdir)
+    lock_if_windows()
     subprocess.check_output(command_compile, cwd=workdir, shell=True)
+    release_if_windows()
 
 
 def compile_test_workdir(workdir, subject_class, junit_jar, evosuite_classes, evosuite_runtime_jar_path):
-    command_win = "for /f %i in ('FORFILES /S /M *.java /C \"CMD /C ECHO @relpath\"') do @echo %~i >> sources.txt"
+    command_win = "FORFILES /S /M *.java /C \"CMD /C echo|set /p=@relpath & echo:\" > sources.txt"
     command_unix = "find . -name '*.java' > sources.txt"  
     command_find = command_win if (platform == "win32") else command_unix
     
-    if (platform == "win32" and os.path.isfile(os.path.join(workdir, "sources.txt"))):
-        os.remove(os.path.join(workdir, "sources.txt"))
-    
     print_command(command_find, workdir)
+    lock_if_windows()
     subprocess.check_output(command_find, cwd=workdir, shell=True)
+    release_if_windows()
 
     sep = ";" if (platform == "win32") else ":"
     command_compile = "javac -classpath {}{}{}{}{}{}{} @sources.txt".format(junit_jar, sep, subject_class, sep, evosuite_classes, sep, evosuite_runtime_jar_path)
     print_command(command_compile, workdir)
+    lock_if_windows()
     subprocess.check_output(command_compile, cwd=workdir, shell=True)
+    release_if_windows()
 
 
 def generate_pitest_workdir(pitest_dir):
@@ -189,18 +197,18 @@ def copy_csv(file_path, file_name, all_report_dir):
     dest = os.path.join(all_report_dir, "{}.csv".format(file_name))
     command = 'cp {} {}'.format(file_path, dest)
     print_command(command)
-    # shutil.copy(file_path, dest)
     subprocess.check_output(command, shell=True)
 
 
 def copy_pitest_csv(name, workdir, all_report_dir):
-    command_win = "for /f %i in ('FORFILES /S /M *.csv /C \"CMD /C ECHO @relpath\"') do @echo %~i >> sources.txt"
+    command_win = "FORFILES /S /M *.csv /C \"CMD /C echo|set /p=@relpath & echo:\" > sources.txt"
     command_unix = "find . -name '*.csv' > sources.txt"  
     command = command_win if (platform == "win32") else command_unix
     print_command(command, workdir)
-    if (platform == "win32" and os.path.isfile(os.path.join(workdir, "sources.txt"))):
-        os.remove(os.path.join(workdir, "sources.txt"))
+    
+    lock_if_windows()
     subprocess.check_output(command, cwd=workdir, shell=True)
+    release_if_windows()
 
     with open(os.path.join(workdir, "sources.txt")) as file:
         for line in file:
