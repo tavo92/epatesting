@@ -251,7 +251,7 @@ class RunTestEPA(threading.Thread):
             compile_workdir(self.instrumented_code_dir, self.evosuite_classes, self.compiled_instrumented_code_dir)
 
             # Run Evosuite
-            run_evosuite(evosuite_jar_path=self.evosuite_jar_path, projectCP=self.compiled_code_dir, class_name=self.class_name, criterion=self.criterion, epa_path=self.epa_path, test_dir=self.generated_test_dir, search_budget=self.search_budget)
+            run_evosuite(evosuite_jar_path=self.evosuite_jar_path, projectCP=self.compiled_code_dir, class_name=self.class_name, criterion=self.criterion, epa_path=self.epa_path, test_dir=self.generated_test_dir, search_budget=self.search_budget, report_dir=self.generated_report_evosuite_dir)
 
             compile_test_workdir(self.generated_test_dir, self.code_dir, self.junit_jar, self.evosuite_classes, self.evosuite_runtime_jar_path)
 
@@ -278,6 +278,6 @@ class RunTestEPA(threading.Thread):
             epacoverage_csv = os.path.join(all_report_dir, "epacoverage_{}.csv".format(self.name))
             jacoco_csv = os.path.join(all_report_dir, "{}_jacoco.csv".format(self.name))
             mutations_csv = os.path.join(all_report_dir, "{}_mutations.csv".format(self.name))
-            resume_csv = os.path.join(self.subdir_metrics,'resume.csv')
+            resume_csv = os.path.join(self.subdir_metrics, 'resume.csv')
             make_report_resume(self.class_name, epacoverage_csv, jacoco_csv, mutations_csv, resume_csv)
             # make_report_resume(self.class_name, , , , '{}resume.csv'.format(self.subdir_metrics))

@@ -103,5 +103,3 @@ if __name__ == '__main__':
     
     merge_all_resumes(all_resumes, 'all_resumes.csv')
     
-    # Clean directorys
-    subprocess.run('rm -r evosuite-report/ report/', shell=True)
