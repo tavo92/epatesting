@@ -278,6 +278,6 @@ class RunTestEPA(threading.Thread):
             epacoverage_csv = os.path.join(all_report_dir, "epacoverage_{}.csv".format(self.name))
             jacoco_csv = os.path.join(all_report_dir, "{}_jacoco.csv".format(self.name))
             mutations_csv = os.path.join(all_report_dir, "{}_mutations.csv".format(self.name))
-            resume_csv = '{}resume.csv'.format(self.subdir_metrics)
+            resume_csv = os.path.join(self.subdir_metrics,'resume.csv')
             make_report_resume(self.class_name, epacoverage_csv, jacoco_csv, mutations_csv, resume_csv)
             # make_report_resume(self.class_name, , , , '{}resume.csv'.format(self.subdir_metrics))
