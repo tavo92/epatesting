@@ -102,4 +102,4 @@ if __name__ == '__main__':
             all_resumes.append(os.path.join(test.subdir_metrics,'resume.csv'))
     
     merge_all_resumes(all_resumes, 'all_resumes.csv')
-    
+    print("Done!")
