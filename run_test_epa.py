@@ -174,7 +174,7 @@ def pitest_measure(pitest_dir, targetClasses, targetTests, class_dir, test_dir):
     # subprocess.check_output(command_copy_source, shell=True)
 
     pitest_dir_src_test_java = os.path.join(pitest_dir, "src", "test", "java")
-    command_copy_test = 'cp -r {}/* {}'.format(test_dir, pitest_dir)
+    command_copy_test = 'cp -r {}/* {}'.format(test_dir, pitest_dir_src_test_java)
     print_command(command_copy_test)
     # Si existe el directorio lo elimino (sino tira error shutil.copytree
     if os.path.exists(pitest_dir_src_test_java):
