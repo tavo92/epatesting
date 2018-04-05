@@ -8,7 +8,6 @@ def read_evosuite_csv(file_path):
     return coverage
 
 def read_jacoco_csv(target_class, file_path):
-    print("ABRIENDOO {}".format(file_path))
     with open(file_path, newline='') as csvfile:
         reader = csv.DictReader(csvfile)
         for row in reader:
@@ -18,13 +17,14 @@ def read_jacoco_csv(target_class, file_path):
                 fully_qualified_class_name = "{}.{}".format(package_name, class_name)
             else:
                 fully_qualified_class_name = class_name
+                
             if fully_qualified_class_name== target_class:
                 branch_missed = float(row['BRANCH_MISSED'])
                 branch_covered = float(row['BRANCH_COVERED'])
                 line_missed = float(row['LINE_MISSED'])
                 line_covered = float(row['LINE_COVERED'])
                 return branch_covered/(branch_missed+branch_covered), line_covered/(line_missed+line_covered)
-    return None
+    return 0,0
 
 def read_pit_csv(file_path):
     killed = 0
