@@ -5,6 +5,7 @@ import subprocess
 from run_test_epa import RunTestEPA
 from make_report_resume import make_report_resume, merge_all_resumes
 import os
+import time
 
 
 class Subject:
@@ -82,9 +83,20 @@ class EPAConfig:
         return [tests_to_run[x:x + self.chunk_size] for x in range(0, len(tests_to_run), self.chunk_size)]
 
 
-if __name__ == '__main__':
-    config = EPAConfig()
+_start_time = time.time()
+def init():
+    global _start_time 
+    _start_time = time.time()
+    
+def end():
+    t_sec = round(time.time() - _start_time)
+    (t_min, t_sec) = divmod(t_sec,60)
+    (t_hour,t_min) = divmod(t_min,60) 
+    print('Total time: {}hour:{}min:{}sec'.format(t_hour,t_min,t_sec))
 
+if __name__ == '__main__':
+    init()
+    config = EPAConfig()
     parser = argparse.ArgumentParser()
     parser.add_argument("config_file", help="The config file needed to run epatesting. See config_example.ini for an example.")
     parser.add_argument("method", help="Use 1 to generate the testsuites, 2 to generate the metrics and 3 to generate both.", type=int)
@@ -102,4 +114,7 @@ if __name__ == '__main__':
             all_resumes.append(os.path.join(test.subdir_metrics,'resume.csv'))
     
     merge_all_resumes(all_resumes, 'all_resumes.csv')
+    end()
     print("Done!")
+    
+    
