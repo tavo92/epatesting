@@ -197,7 +197,7 @@ def copy_csv(file_path, file_name, all_report_dir):
     dest = os.path.join(all_report_dir, "{}.csv".format(file_name))
     command = 'cp {} {}'.format(file_path, dest)
     print_command(command)
-    subprocess.check_output(command, shell=True)
+    shutil.copyfile(file_path, dest)
 
 
 def copy_pitest_csv(name, workdir, all_report_dir):
