@@ -20,7 +20,7 @@ class Subject:
 
 class EPAConfig:
 
-    def read_config_file(self, config_file, method):
+    def read_config_file(self, config_file):
         config = configparser.ConfigParser()
         config.read(config_file)
 
@@ -98,11 +98,10 @@ if __name__ == '__main__':
     config = EPAConfig()
     parser = argparse.ArgumentParser()
     parser.add_argument("config_file", help="The config file needed to run epatesting. See config_example.ini for an example.")
-    parser.add_argument("method", help="Use 1 to generate the testsuites, 2 to generate the metrics and 3 to generate both.", type=int)
     args = parser.parse_args()
 
     # Run all the tests
-    config.read_config_file(args.config_file, args.method)
+    config.read_config_file(args.config_file)
     test_chunks = config.read_runs_file('config2.ini')
     all_resumes = []
     for chunk in test_chunks:
