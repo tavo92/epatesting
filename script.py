@@ -1,9 +1,8 @@
 import argparse
 import configparser
-import subprocess
 
 from run_test_epa import RunTestEPA
-from make_report_resume import make_report_resume, merge_all_resumes
+from make_report_resume import merge_all_resumes
 import os
 import time
 
