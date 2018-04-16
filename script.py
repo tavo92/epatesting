@@ -31,7 +31,7 @@ class EPAConfig:
         self.evosuite_runtime_jar_path = config['DEFAULT']['EvoSuiteRuntimeJARPath']
         self.results_dir_name = config['DEFAULT']['ResultsDirName']
         
-        self.chunk_size = int(config['DEFAULT']['ChunkSize'])
+        self.chunk_size = int(config['DEFAULT']['Workers'])
 
         # Reads each section witch defines a run
         # tests_to_run = []
