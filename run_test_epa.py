@@ -20,6 +20,12 @@ def print_command(command, workdir=None):
     if workdir is not None:
         print('In workdir: {}'.format(workdir))
     print(command)
+    
+def find_and_save_command(toFind, saveIn):
+    command_win = "FORFILES /S /M {} /C \"CMD /C echo|set /p=@relpath & echo:\" > {}".format(toFind, saveIn)
+    command_unix = "find . -name '{}' > {}".format(toFind, saveIn)
+    command_find = command_win if (platform == "win32") else command_unix
+    return command_find
 
 
 def run_evosuite(evosuite_jar_path, projectCP, class_name, criterion, epa_path, search_budget, test_dir='test', report_dir='report'):
@@ -29,7 +35,7 @@ def run_evosuite(evosuite_jar_path, projectCP, class_name, criterion, epa_path, 
 
 
 def measure_evosuite(evosuite_jar_path, projectCP, testCP, class_name, epa_path, report_dir):
-    sep = ";" if (platform == "win32") else ":"
+    sep = os.path.pathsep
     command = 'java -jar {}evosuite-master-1.0.4-SNAPSHOT.jar -projectCP {}{}{} -class {} -Depa_xml_path={} -criterion EPATRANSITION -Dwrite_covered_goals_file=\"true\" -Dwrite_all_goals_file=\"true\" -Dreport_dir={} -measureCoverage'.format(evosuite_jar_path, projectCP, sep, testCP, class_name, epa_path, report_dir)
     print_command(command)
     subprocess.check_output(command, shell=True)
@@ -80,10 +86,7 @@ def release_if_windows():
 
 
 def compile_workdir(workdir, evosuite_classes, output_directory):
-    command_win = "FORFILES /S /M *.java /C \"CMD /C echo|set /p=@relpath & echo:\" > sources.txt"
-    command_unix = "find . -name '*.java' > sources.txt"  
-    command_find = command_win if (platform == "win32") else command_unix 
-        
+    command_find = find_and_save_command("*.java", "sources.txt")
     print_command(command_find, workdir)
     
     lock_if_windows()
@@ -102,16 +105,13 @@ def compile_workdir(workdir, evosuite_classes, output_directory):
 
 
 def compile_test_workdir(workdir, subject_class, junit_jar, evosuite_classes, evosuite_runtime_jar_path):
-    command_win = "FORFILES /S /M *.java /C \"CMD /C echo|set /p=@relpath & echo:\" > sources.txt"
-    command_unix = "find . -name '*.java' > sources.txt"  
-    command_find = command_win if (platform == "win32") else command_unix
-    
+    command_find = find_and_save_command("*.java", "sources.txt")
     print_command(command_find, workdir)
     lock_if_windows()
     subprocess.check_output(command_find, cwd=workdir, shell=True)
     release_if_windows()
 
-    sep = ";" if (platform == "win32") else ":"
+    sep = os.path.pathsep
     command_compile = "javac -classpath {}{}{}{}{}{}{} @sources.txt".format(junit_jar, sep, subject_class, sep, evosuite_classes, sep, evosuite_runtime_jar_path)
     print_command(command_compile, workdir)
     lock_if_windows()
@@ -198,9 +198,7 @@ def copy_csv(file_path, file_name, all_report_dir):
 
 
 def copy_pitest_csv(name, workdir, all_report_dir):
-    command_win = "FORFILES /S /M *.csv /C \"CMD /C echo|set /p=@relpath & echo:\" > sources.txt"
-    command_unix = "find . -name '*.csv' > sources.txt"  
-    command = command_win if (platform == "win32") else command_unix
+    command = find_and_save_command("*.csv", "sources.txt")
     print_command(command, workdir)
     
     lock_if_windows()
