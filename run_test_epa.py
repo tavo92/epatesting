@@ -176,8 +176,7 @@ def pitest_measure(pitest_dir, targetClasses, targetTests, class_dir, test_dir):
     if os.path.exists(pitest_dir_src_main_java):
         shutil.rmtree(pitest_dir_src_main_java)
     shutil.copytree(class_dir, pitest_dir_src_main_java)
-    # subprocess.check_output(command_copy_source, shell=True)
-
+    
     pitest_dir_src_test_java = os.path.join(pitest_dir, "src", "test", "java")
     command_copy_test = 'cp -r {}/* {}'.format(test_dir, pitest_dir_src_test_java)
     print_command(command_copy_test)
@@ -185,9 +184,8 @@ def pitest_measure(pitest_dir, targetClasses, targetTests, class_dir, test_dir):
     if os.path.exists(pitest_dir_src_test_java):
         shutil.rmtree(pitest_dir_src_test_java)
     shutil.copytree(test_dir, pitest_dir_src_test_java)
-    # subprocess.check_output(command_copy_test, shell=True)
 
-    run_pitest('{}/'.format(pitest_dir))
+    run_pitest(os.path.join(pitest_dir, ""))
 
 
 def copy_csv(file_path, file_name, all_report_dir):
