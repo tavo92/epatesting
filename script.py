@@ -31,7 +31,7 @@ class EPAConfig:
         self.evosuite_runtime_jar_path = config['DEFAULT']['EvoSuiteRuntimeJARPath']
         self.results_dir_name = config['DEFAULT']['ResultsDirName']
         
-        self.chunk_size = int(config['DEFAULT']['Workers'])
+        self.workers = int(config['DEFAULT']['Workers'])
 
         # Reads each section witch defines a run
         # tests_to_run = []
@@ -47,7 +47,7 @@ class EPAConfig:
             epa_path = config[section]['EPAPath']
             self.subjects[section] = Subject(name, code_dir, instrumented_code_dir, original_code_dir, class_name, epa_path)
 
-    def read_runs_file(self, file):
+    def read_runs_file(self, runs_file):
 
         # File format:
         # [SUBJECTS]*[BUDGETS]*[CRITERIOS]*METHOD*REP
@@ -57,7 +57,7 @@ class EPAConfig:
             # Split by commas
             return values.split(',')
 
-        with open(file) as f:
+        with open(runs_file) as f:
             lines = f.readlines()
             lines = [line.strip() for line in lines]
 
@@ -79,7 +79,7 @@ class EPAConfig:
                             tests_to_run.append(RunTestEPA(name=subject.name, junit_jar=self.junit_jar, code_dir=subject.code_dir, instrumented_code_dir=subject.instrumented_code_dir, original_code_dir=subject.original_code_dir, evosuite_classes=self.evosuite_classes, evosuite_jar_path=self.evosuite_jar_path, evosuite_runtime_jar_path=self.evosuite_runtime_jar_path, class_name=subject.class_name, epa_path=subject.epa_path, criterion=criterion, search_budget=search_budget, runid=runid, method=method, results_dir_name=self.results_dir_name))
                             runid += 1
 
-        return [tests_to_run[x:x + self.chunk_size] for x in range(0, len(tests_to_run), self.chunk_size)]
+        return [tests_to_run[x:x + self.workers] for x in range(0, len(tests_to_run), self.workers)]
 
 
 _start_time = time.time()
@@ -93,23 +93,34 @@ def end():
     (t_hour,t_min) = divmod(t_min,60) 
     print('Total time: {}hour:{}min:{}sec'.format(t_hour,t_min,t_sec))
 
+global finished_subjects
+global total_subjects
 if __name__ == '__main__':
     init()
     config = EPAConfig()
     parser = argparse.ArgumentParser()
     parser.add_argument("config_file", help="The config file needed to run epatesting. See config_example.ini for an example.")
+    parser.add_argument("runs_file", help="The runs file needed to run epatesting. See runs.ini for an example.")
     args = parser.parse_args()
 
     # Run all the tests
     config.read_config_file(args.config_file)
-    test_chunks = config.read_runs_file('config2.ini')
+    test_chunks = config.read_runs_file(args.runs_file)
     all_resumes = []
+    total_subjects = 0
+    finished_subjects = 0
+    for chunk in test_chunks:
+        total_subjects = total_subjects + len(chunk) 
+    
     for chunk in test_chunks:
         for test in chunk:
             test.start()
         for test in chunk:
             test.join()
             all_resumes.append(os.path.join(test.subdir_metrics,'resume.csv'))
+            finished_subjects = finished_subjects + 1
+            percent_finished = finished_subjects*100/total_subjects 
+            print("=====================================> PROGRESS {}% ({}/{}) <=====================================".format(percent_finished, finished_subjects, total_subjects))
     
     merge_all_resumes(all_resumes, 'all_resumes.csv')
     end()
