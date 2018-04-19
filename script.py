@@ -5,8 +5,6 @@ from run_test_epa import RunTestEPA
 from make_report_resume import merge_all_resumes
 import os
 import time
-from idlelib.replace import replace
-
 
 class Subject:
 
