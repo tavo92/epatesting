@@ -74,6 +74,7 @@ class EPAConfig:
             for subject_name in subjects_names:
                 for search_budget in search_budgets:
                     for criterion in criterions:
+                        runid = 0
                         for __ in range(rep):
                             subject = self.subjects[subject_name]
                             tests_to_run.append(RunTestEPA(name=subject.name, junit_jar=self.junit_jar, code_dir=subject.code_dir, instrumented_code_dir=subject.instrumented_code_dir, original_code_dir=subject.original_code_dir, evosuite_classes=self.evosuite_classes, evosuite_jar_path=self.evosuite_jar_path, evosuite_runtime_jar_path=self.evosuite_runtime_jar_path, class_name=subject.class_name, epa_path=subject.epa_path, criterion=criterion, search_budget=search_budget, runid=runid, method=method, results_dir_name=self.results_dir_name))
@@ -100,7 +101,7 @@ if __name__ == '__main__':
     config = EPAConfig()
     parser = argparse.ArgumentParser()
     parser.add_argument("config_file", help="The config file needed to run epatesting. See config_example.ini for an example.")
-    parser.add_argument("runs_file", help="The runs file needed to run epatesting. See runs.ini for an example.")
+    parser.add_argument("runs_file", help="The runs file needed to run epatesting. See runs_example.ini for an example.")
     args = parser.parse_args()
 
     # Run all the tests
