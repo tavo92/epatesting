@@ -5,6 +5,7 @@ from run_test_epa import RunTestEPA
 from make_report_resume import merge_all_resumes
 import os
 import time
+from idlelib.replace import replace
 
 
 class Subject:
@@ -21,15 +22,26 @@ class Subject:
 class EPAConfig:
 
     def read_config_file(self, config_file):
+        
+        def replace_paths_separator(path):
+            path = path.replace("\\", os.path.sep)
+            return path.replace("/", os.path.sep)
+    
         config = configparser.ConfigParser()
         config.read(config_file)
 
+        user_home_dir = os.path.expanduser('~')
         # Reads the configuration values that will be used in each run
-        self.junit_jar = config['DEFAULT']['JUnitJAR']
-        self.evosuite_classes = config['DEFAULT']['EvoSuiteClasses']
-        self.evosuite_jar_path = config['DEFAULT']['EvoSuiteJARPath']
-        self.evosuite_runtime_jar_path = config['DEFAULT']['EvoSuiteRuntimeJARPath']
-        self.results_dir_name = config['DEFAULT']['ResultsDirName']
+        self.junit_jar = replace_paths_separator(config['DEFAULT']['JUnitJAR'])
+        self.junit_jar = os.path.join(user_home_dir, self.junit_jar)
+        self.evosuite_classes = replace_paths_separator(config['DEFAULT']['EvoSuiteClasses'])
+        self.evosuite_classes = os.path.join(user_home_dir, self.evosuite_classes)
+        self.evosuite_jar_path = replace_paths_separator(config['DEFAULT']['EvoSuiteJARPath'])
+        self.evosuite_jar_path = os.path.join(user_home_dir, self.evosuite_jar_path)
+        self.evosuite_runtime_jar_path = replace_paths_separator(config['DEFAULT']['EvoSuiteRuntimeJARPath'])
+        self.evosuite_runtime_jar_path = os.path.join(user_home_dir, self.evosuite_runtime_jar_path)
+        self.results_dir_name = replace_paths_separator(config['DEFAULT']['ResultsDirName'])
+        self.results_dir_name = os.path.join(user_home_dir, self.results_dir_name)
         
         self.workers = int(config['DEFAULT']['Workers'])
 
@@ -40,12 +52,17 @@ class EPAConfig:
 
         for section in config.sections():
             name = config[section]['Name']
-            code_dir = config[section]['CodeDir']
-            instrumented_code_dir = config[section]['InstrumentedCodeDir']
-            original_code_dir = config[section]['OriginalCodeDir']
+            code_dir = replace_paths_separator(config[section]['CodeDir'])
+            code_dir = os.path.join(user_home_dir, code_dir)
+            instrumented_code_dir = replace_paths_separator(config[section]['InstrumentedCodeDir'])
+            instrumented_code_dir = os.path.join(user_home_dir, instrumented_code_dir)
+            original_code_dir = replace_paths_separator(config[section]['OriginalCodeDir'])
+            original_code_dir = os.path.join(user_home_dir, original_code_dir)
             class_name = config[section]['ClassName']
-            epa_path = config[section]['EPAPath']
+            epa_path = replace_paths_separator(config[section]['EPAPath'])
+            epa_path = os.path.join(user_home_dir, epa_path)
             self.subjects[section] = Subject(name, code_dir, instrumented_code_dir, original_code_dir, class_name, epa_path)
+            
 
     def read_runs_file(self, runs_file):
 
