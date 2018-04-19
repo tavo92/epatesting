@@ -1,5 +1,9 @@
 import csv
 
+header_names = ['Class', 'EPA Coverage', 'Branch Coverage', 'Line Coverage', 'Mutation Coverage', 'Run ID']
+
+def write_row(writer, row):
+    writer.writerow({'Class': row[0], 'EPA Coverage': row[1], 'Branch Coverage': row[2], 'Line Coverage': row[3], 'Mutation Coverage': row[4], 'Run ID': row[5]});
 
 def read_evosuite_csv(file_path):
     with open(file_path, newline='') as csvfile:
@@ -41,34 +45,34 @@ def read_pit_csv(file_path):
     return killed / total
 
 
-def report_resume_row(target_class, evosuite, jacoco, pit):
+def report_resume_row(target_class, evosuite, jacoco, pit, runid):
     epa_coverage = read_evosuite_csv(evosuite)
     branch_coverage, line_coverage = read_jacoco_csv(target_class, jacoco)
     mutation_coverage = read_pit_csv(pit)
-    return {'Class': target_class, 'EPA Coverage': epa_coverage, 'Branch Coverage': branch_coverage, 'Line Coverage': line_coverage, 'Mutation Coverage': mutation_coverage}
+    row = [target_class, epa_coverage, branch_coverage, line_coverage, mutation_coverage, runid]
+    return row
 
 
-def make_report_resume(target_class, evosuite, jacoco, pit, output_file):
+def make_report_resume(target_class, evosuite, jacoco, pit, output_file, runid):
     with open(output_file, 'w', newline='') as csvfile:
-        fieldnames = ['Class', 'EPA Coverage', 'Branch Coverage', 'Line Coverage', 'Mutation Coverage']
-        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+        writer = csv.DictWriter(csvfile, fieldnames=header_names)
 
         writer.writeheader()
-        writer.writerow(report_resume_row(target_class, evosuite, jacoco, pit))
+        row = report_resume_row(target_class, evosuite, jacoco, pit, runid)
+        write_row(writer, row)
 
 
 def merge_all_resumes(all_resumes, output_file):
     with open(output_file, 'w', newline='') as csvfile:
-        fieldnames = ['Class', 'EPA Coverage', 'Branch Coverage', 'Line Coverage', 'Mutation Coverage']
-        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+        writer = csv.DictWriter(csvfile, fieldnames=header_names)
         writer.writeheader()
 
         for resume in all_resumes:
             try:
                 with open(resume, newline='') as csvfile:
                     reader = csv.reader(csvfile)
-                    header = next(reader)
+                    next(reader) # Evito el header
                     for row in reader:
-                        writer.writerow({'Class': row[0], 'EPA Coverage': row[1], 'Branch Coverage': row[2], 'Line Coverage': row[3], 'Mutation Coverage': row[4]});
+                        write_row(writer, row)
             except FileNotFoundError:
                 print("{} doesn't exists".format(resume))

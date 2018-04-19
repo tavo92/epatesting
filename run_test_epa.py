@@ -128,39 +128,33 @@ def generate_pitest_workdir(pitest_dir):
     print_command(command_mkdir_home)
     if not os.path.exists(pitest_dir):
         os.makedirs(pitest_dir)
-    # subprocess.check_output(command_mkdir_home, shell=True)
     pitest_dir_src = os.path.join(pitest_dir, "src");
     command_mkdir_src = "mkdir {}".format(pitest_dir_src)
     print_command(command_mkdir_src)
-    # subprocess.check_output(command_mkdir_src, shell=True)
     if not os.path.exists(pitest_dir_src):
         os.makedirs(pitest_dir_src)
 
     pitest_dir_src_main = os.path.join(pitest_dir, "src", "main");
     command_mkdir_src_main = "mkdir {}".format(pitest_dir_src_main)
     print_command(command_mkdir_src_main)
-    # subprocess.check_output(command_mkdir_src_main, shell=True)
     if not os.path.exists(pitest_dir_src_main):
         os.makedirs(pitest_dir_src_main)
 
     pitest_dir_src_main_java = os.path.join(pitest_dir, "src", "main", "java")
     command_mkdir_src_main_java = "mkdir {}".format(pitest_dir_src_main_java)
     print_command(command_mkdir_src_main_java)
-    # subprocess.check_output(command_mkdir_src_main_java, shell=True)
     if not os.path.exists(pitest_dir_src_main_java):
         os.makedirs(pitest_dir_src_main_java)
     
     pitest_dir_src_test = os.path.join(pitest_dir, "src", "test")
     command_mkdir_src_test = "mkdir {}".format(pitest_dir_src_test)
     print_command(command_mkdir_src_test)
-    # subprocess.check_output(command_mkdir_src_test, shell=True)
     if not os.path.exists(pitest_dir_src_test):
         os.makedirs(pitest_dir_src_test)
         
     pitest_dir_src_test_java = os.path.join(pitest_dir, "src", "test", "java")        
     command_mkdir_src_test_java = "mkdir {}".format(pitest_dir_src_test_java)
     print_command(command_mkdir_src_test_java)
-    # subprocess.check_output(command_mkdir_src_test_java, shell=True)
     if not os.path.exists(pitest_dir_src_test_java):
         os.makedirs(pitest_dir_src_test_java)
 
@@ -172,7 +166,7 @@ def pitest_measure(pitest_dir, targetClasses, targetTests, class_dir, test_dir):
     pitest_dir_src_main_java = os.path.join(pitest_dir, "src", "main", "java")
     command_copy_source = 'cp -r {}/* {}'.format(class_dir, pitest_dir_src_main_java)
     print_command(command_copy_source)
-    # Si existe el directorio lo elimino (sino tira error shutil.copytree
+    # Si existe el directorio lo elimino (sino tira error shutil.copytree)
     if os.path.exists(pitest_dir_src_main_java):
         shutil.rmtree(pitest_dir_src_main_java)
     shutil.copytree(class_dir, pitest_dir_src_main_java)
@@ -180,7 +174,6 @@ def pitest_measure(pitest_dir, targetClasses, targetTests, class_dir, test_dir):
     pitest_dir_src_test_java = os.path.join(pitest_dir, "src", "test", "java")
     command_copy_test = 'cp -r {}/* {}'.format(test_dir, pitest_dir_src_test_java)
     print_command(command_copy_test)
-    # Si existe el directorio lo elimino (sino tira error shutil.copytree
     if os.path.exists(pitest_dir_src_test_java):
         shutil.rmtree(pitest_dir_src_test_java)
     shutil.copytree(test_dir, pitest_dir_src_test_java)
@@ -269,7 +262,6 @@ class RunTestEPA(threading.Thread):
             print_command(command_mkdir_report)
             if not os.path.exists(all_report_dir):
                 os.makedirs(all_report_dir)
-            # subprocess.check_output(command_mkdir_report, shell=True)
 
             copy_pitest_csv(self.name, self.generated_report_pitest_dir, all_report_dir)
             
@@ -280,5 +272,5 @@ class RunTestEPA(threading.Thread):
             jacoco_csv = os.path.join(all_report_dir, "{}_jacoco.csv".format(self.name))
             mutations_csv = os.path.join(all_report_dir, "{}_mutations.csv".format(self.name))
             resume_csv = os.path.join(self.subdir_metrics, 'resume.csv')
-            make_report_resume(self.class_name, epacoverage_csv, jacoco_csv, mutations_csv, resume_csv)
-            # make_report_resume(self.class_name, , , , '{}resume.csv'.format(self.subdir_metrics))
+            runid = "{};{};{}".format(self.search_budget, self.criterion, self.runid)
+            make_report_resume(self.class_name, epacoverage_csv, jacoco_csv, mutations_csv, resume_csv, runid)
