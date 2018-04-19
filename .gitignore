@@ -1,2 +1,4 @@
 */
 resume.csv
+all_resumes.csv
+*.pyc
