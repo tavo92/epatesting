@@ -103,11 +103,15 @@ def init():
     global _start_time 
     _start_time = time.time()
     
-def end():
+def elapsed_time():
     t_sec = round(time.time() - _start_time)
     (t_min, t_sec) = divmod(t_sec,60)
-    (t_hour,t_min) = divmod(t_min,60) 
-    print('Total time: {}hour:{}min:{}sec'.format(t_hour,t_min,t_sec))
+    (t_hour,t_min) = divmod(t_min,60)
+    return [t_hour, t_min, t_sec]
+    
+def print_elapsed_time():
+    total_time = elapsed_time()
+    print('Total time: {}hour:{}min:{}sec'.format(total_time[0], total_time[1], total_time[2]))
 
 global finished_subjects
 global total_subjects
@@ -135,11 +139,12 @@ if __name__ == '__main__':
             test.join()
             all_resumes.append(os.path.join(test.subdir_metrics,'resume.csv'))
             finished_subjects = finished_subjects + 1
-            percent_finished = finished_subjects*100/total_subjects 
-            print("=====================================> PROGRESS {}% ({}/{}) <=====================================".format(percent_finished, finished_subjects, total_subjects))
+            percent_finished = finished_subjects*100/total_subjects
+            total_time = elapsed_time()
+            print("=====================================> PROGRESS {}% ({}/{}) Elapsed time: {}:{}:{}<=====================================".format(percent_finished, finished_subjects, total_subjects, total_time[0], total_time[1], total_time[2]))
     
     merge_all_resumes(all_resumes, 'all_resumes.csv')
-    end()
+    print_elapsed_time()
     print("Done!")
     
     
