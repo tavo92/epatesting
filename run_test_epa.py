@@ -272,5 +272,14 @@ class RunTestEPA(threading.Thread):
             jacoco_csv = os.path.join(all_report_dir, "{}_jacoco.csv".format(self.name))
             mutations_csv = os.path.join(all_report_dir, "{}_mutations.csv".format(self.name))
             resume_csv = os.path.join(self.subdir_metrics, 'resume.csv')
-            runid = "{};{};{}".format(self.search_budget, self.criterion, self.runid)
-            make_report_resume(self.class_name, epacoverage_csv, jacoco_csv, mutations_csv, resume_csv, runid)
+            criterion = get_alternative_criterion_names(self.criterion)
+            make_report_resume(self.class_name, epacoverage_csv, jacoco_csv, mutations_csv, resume_csv, self.runid, self.search_budget, criterion)
+            
+def get_alternative_criterion_names(criterion):
+    if (criterion == "line:branch"):
+        criterion = "evosuite_default"
+    if (criterion == "epatransition"):
+        criterion = "evosuite_epaalone"
+    if (criterion == "line:branch:epatransition"):
+        criterion = "evosuite_epamixed"
+    return criterion
