@@ -31,13 +31,12 @@ def find_and_save_command(toFind, saveIn):
 def run_evosuite(evosuite_jar_path, projectCP, class_name, criterion, epa_path, search_budget, test_dir='test', report_dir='report'):
     command = 'java -jar {}evosuite-master-1.0.4-SNAPSHOT.jar -projectCP {} -class {} -criterion {} -Dsearch_budget={} -Djunit_allow_restricted_libraries=true -Dp_functional_mocking=\"0.0\" -Dp_reflection_on_private=\"0.0\" -Duse_separate_classloader=\"false\" -Dwrite_covered_goals_file=\"true\" -Dwrite_all_goals_file=\"true\" -Dprint_missed_goals=\"true\" -Dtest_dir={} -Dreport_dir={} -Depa_xml_path={} -Dno_runtime_dependency=\"true\" -Dassertions=\"false\" -Dshow_progress=\"false\" -Dlog.level=debug > {}out.txt 2> {}err.txt'.format(evosuite_jar_path, projectCP, class_name, criterion, search_budget, test_dir, report_dir, epa_path, test_dir, test_dir)
     print_command(command)
-    print(test_dir)
     subprocess.check_output(command, shell=True)
 
 
 def measure_evosuite(evosuite_jar_path, projectCP, testCP, class_name, epa_path, report_dir):
     sep = os.path.pathsep
-    command = 'java -jar {}evosuite-master-1.0.4-SNAPSHOT.jar -projectCP {}{}{} -class {} -Depa_xml_path={} -criterion EPATRANSITION -Dwrite_covered_goals_file=\"true\" -Dwrite_all_goals_file=\"true\" -Dreport_dir={} -measureCoverage'.format(evosuite_jar_path, projectCP, sep, testCP, class_name, epa_path, report_dir)
+    command = 'java -jar {}evosuite-master-1.0.4-SNAPSHOT.jar -projectCP {}{} -class {} -Depa_xml_path={} -criterion EPATRANSITION -Dwrite_covered_goals_file=\"true\" -Dwrite_all_goals_file=\"true\" -Dreport_dir={} -measureCoverage > {}_out.txt 2> {}_err.txt'.format(evosuite_jar_path, projectCP, sep, testCP, class_name, epa_path, report_dir, report_dir, report_dir)
     print_command(command)
     subprocess.check_output(command, shell=True)
 
@@ -71,7 +70,7 @@ def edit_pit_pom(file_path, targetClasses, targetTests, output_file):
 
 
 def run_pitest(workdir):
-    command = "mvn clean install org.pitest:pitest-maven:mutationCoverage"
+    command = "mvn clean install org.pitest:pitest-maven:mutationCoverage > {}out.txt 2> {}err.txt".format(workdir, workdir)
     print_command(command, workdir)
     subprocess.check_output(command, cwd=workdir, shell=True)
 
