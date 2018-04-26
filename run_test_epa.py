@@ -36,7 +36,7 @@ def run_evosuite(evosuite_jar_path, projectCP, class_name, criterion, epa_path, 
 
 def measure_evosuite(evosuite_jar_path, projectCP, testCP, class_name, epa_path, report_dir):
     sep = os.path.pathsep
-    command = 'java -jar {}evosuite-master-1.0.4-SNAPSHOT.jar -projectCP {}{} -class {} -Depa_xml_path={} -criterion EPATRANSITION -Dwrite_covered_goals_file=\"true\" -Dwrite_all_goals_file=\"true\" -Dreport_dir={} -measureCoverage > {}_out.txt 2> {}_err.txt'.format(evosuite_jar_path, projectCP, sep, testCP, class_name, epa_path, report_dir, report_dir, report_dir)
+    command = 'java -jar {}evosuite-master-1.0.4-SNAPSHOT.jar -projectCP {}{}{} -class {} -Depa_xml_path={} -criterion EPATRANSITION -Dwrite_covered_goals_file=\"true\" -Dwrite_all_goals_file=\"true\" -Dreport_dir={} -measureCoverage > {}_out.txt 2> {}_err.txt'.format(evosuite_jar_path, projectCP, sep, testCP, class_name, epa_path, report_dir, report_dir, report_dir)
     print_command(command)
     subprocess.check_output(command, shell=True)
 
@@ -225,8 +225,8 @@ class RunTestEPA(threading.Thread):
         self.epa_path = epa_path
         self.criterion = criterion
         self.generated_test_dir = os.path.join(self.subdir_testgen, 'test')
-        self.generated_report_evosuite_dir = os.path.join(self.subdir_metrics, 'report_evosuite')
-        self.generated_report_pitest_dir = os.path.join(self.subdir_metrics, 'report_pitest')
+        self.generated_report_evosuite_dir = os.path.join(self.subdir_testgen, 'report_evosuite')
+        self.generated_report_pitest_dir = os.path.join(self.subdir_testgen, 'report_pitest')
         self.search_budget = search_budget
         self.runid = runid
 
