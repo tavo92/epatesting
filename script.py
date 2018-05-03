@@ -5,6 +5,7 @@ from run_test_epa import RunTestEPA
 from make_report_resume import merge_all_resumes
 import os
 import time
+import mujava_coverage
 
 class Subject:
 
@@ -40,8 +41,13 @@ class EPAConfig:
         self.evosuite_runtime_jar_path = os.path.join(user_home_dir, self.evosuite_runtime_jar_path)
         self.results_dir_name = replace_paths_separator(config['DEFAULT']['ResultsDirName'])
         self.results_dir_name = os.path.join(user_home_dir, self.results_dir_name)
-        
         self.workers = int(config['DEFAULT']['Workers'])
+        self.mujava_home = replace_paths_separator(config['DEFAULT']['MujavaHome'])
+        self.mujava_home = os.path.join(user_home_dir, self.mujava_home)
+        self.mujava_mutants_dir = replace_paths_separator(config['DEFAULT']['MutantsDir'])
+        self.mujava_mutants_dir = os.path.join(user_home_dir, self.mujava_mutants_dir)
+        self.hamcrest_jar_path = replace_paths_separator(config['DEFAULT']['HamcrestJarPath'])
+        self.hamcrest_jar_path = os.path.join(user_home_dir, self.hamcrest_jar_path)
 
         # Reads each section witch defines a run
         # tests_to_run = []
@@ -92,7 +98,7 @@ class EPAConfig:
                         runid = 0
                         for __ in range(rep):
                             subject = self.subjects[subject_name]
-                            tests_to_run.append(RunTestEPA(name=subject.name, junit_jar=self.junit_jar, code_dir=subject.code_dir, instrumented_code_dir=subject.instrumented_code_dir, original_code_dir=subject.original_code_dir, evosuite_classes=self.evosuite_classes, evosuite_jar_path=self.evosuite_jar_path, evosuite_runtime_jar_path=self.evosuite_runtime_jar_path, class_name=subject.class_name, epa_path=subject.epa_path, criterion=criterion, search_budget=search_budget, runid=runid, method=method, results_dir_name=self.results_dir_name))
+                            tests_to_run.append(RunTestEPA(name=subject.name, junit_jar=self.junit_jar, code_dir=subject.code_dir, instrumented_code_dir=subject.instrumented_code_dir, original_code_dir=subject.original_code_dir, evosuite_classes=self.evosuite_classes, evosuite_jar_path=self.evosuite_jar_path, evosuite_runtime_jar_path=self.evosuite_runtime_jar_path, class_name=subject.class_name, epa_path=subject.epa_path, criterion=criterion, search_budget=search_budget, runid=runid, method=method, results_dir_name=self.results_dir_name, mujava_home=self.mujava_home, mujava_mutants_dir=self.mujava_mutants_dir, hamcrest_jar_path=self.hamcrest_jar_path))
                             runid += 1
 
         return [tests_to_run[x:x + self.workers] for x in range(0, len(tests_to_run), self.workers)]
@@ -126,11 +132,15 @@ if __name__ == '__main__':
     # Run all the tests
     config.read_config_file(args.config_file)
     test_chunks = config.read_runs_file(args.runs_file)
+    
+    #Copy mujava directories
+    mujava_coverage.setup_mujava(config.mujava_home, config.mujava_mutants_dir)
+    
     all_resumes = []
     total_subjects = 0
     finished_subjects = 0
     for chunk in test_chunks:
-        total_subjects = total_subjects + len(chunk) 
+        total_subjects = total_subjects + len(chunk)
     
     for chunk in test_chunks:
         for test in chunk:

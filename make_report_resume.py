@@ -1,13 +1,13 @@
 import csv
 
-header_names = ['ID', 'BUD', 'SUBJ', 'TOOL', 'LINE', 'BRNCH', 'EPA', 'ERR', 'NERR', 'TERR', 'MUT', 'TIME', 'LOC', 'PIMUT', 'ERRF']
+header_names = ['ID', 'BUD', 'SUBJ', 'TOOL', 'LINE', 'BRNCH', 'EPA', 'ERR', 'NERR', 'TERR', 'MUT', 'TIME', 'LOC', 'PIMUT', 'ERRF', 'MJMUT']
 
 def write_row(writer, row):
     writer.writerow({'ID': row[0], 'BUD': row[1], 'SUBJ': row[2], 'TOOL': row[3], 'LINE': row[4], 'BRNCH': row[5], 'EPA': row[6], 'ERR': row[7],
                      'NERR': row[8], 'TERR': row[9], 'MUT': row[10], 'TIME': row[11], 'LOC': row[12], 'PIMUT': row[13], 'ERRF': row[14]});
                      
 def get_complete_row(row):
-    return [row[0], row[1], row[2], row[3], row[4], row[5], row[6], 'N/A', 'N/A', 'N/A', 'N/A', 'N/A', 'N/A', row[7], 'N/A']
+    return [row[0], row[1], row[2], row[3], row[4], row[5], row[6], 'N/A', 'N/A', 'N/A', 'N/A', 'N/A', 'N/A', row[7], 'N/A', row[8]]
 
 def read_evosuite_csv(file_path):
     with open(file_path, newline='') as csvfile:
@@ -49,20 +49,20 @@ def read_pit_csv(file_path):
     return killed / total
 
 
-def report_resume_row(target_class, evosuite, jacoco, pit, runid, search_budget, criterion):
+def report_resume_row(target_class, evosuite, jacoco, pit, runid, search_budget, criterion, mujava_coverage):
     epa_coverage = read_evosuite_csv(evosuite)
     branch_coverage, line_coverage = read_jacoco_csv(target_class, jacoco)
     mutation_coverage = read_pit_csv(pit)
-    row = [runid, search_budget, target_class, criterion, line_coverage, branch_coverage, epa_coverage, mutation_coverage]
+    row = [runid, search_budget, target_class, criterion, line_coverage, branch_coverage, epa_coverage, mutation_coverage, mujava_coverage]
     return row
 
 
-def make_report_resume(target_class, evosuite, jacoco, pit, output_file, runid, search_budget, criterion):
+def make_report_resume(target_class, evosuite, jacoco, pit, output_file, runid, search_budget, criterion, mujava_csv):
     with open(output_file, 'w', newline='') as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames=header_names)
 
         writer.writeheader()
-        row = report_resume_row(target_class, evosuite, jacoco, pit, runid, search_budget, criterion)
+        row = report_resume_row(target_class, evosuite, jacoco, pit, runid, search_budget, criterion, mujava_csv)
         row = get_complete_row(row)
         write_row(writer, row)
 

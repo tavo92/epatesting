@@ -7,6 +7,7 @@ from enum import Enum
 
 from make_report_resume import make_report_resume
 from sys import platform
+import mujava_coverage
 
 
 class EpatestingMethod(Enum):
@@ -179,6 +180,10 @@ def pitest_measure(pitest_dir, targetClasses, targetTests, class_dir, test_dir):
     shutil.copytree(test_dir, pitest_dir_src_test_java)
 
     run_pitest(os.path.join(pitest_dir, ""))
+    
+def mujava_measure(mujava_mutants_dir, compiled_original_code_dir, generated_test_dir, class_name, junit_jar, hamcrest_jar, generated_report_mujava):
+    mujava = mujava_coverage.MuJava(mujava_mutants_dir, compiled_original_code_dir, generated_test_dir, class_name, junit_jar, hamcrest_jar, generated_report_mujava)
+    mujava.compute_mutation_score()
 
 
 def copy_csv(file_path, file_name, all_report_dir):
@@ -207,7 +212,7 @@ def copy_pitest_csv(name, workdir, all_report_dir):
 
 class RunTestEPA(threading.Thread):
 
-    def __init__(self, name, junit_jar, code_dir, instrumented_code_dir, original_code_dir, evosuite_classes, evosuite_jar_path, evosuite_runtime_jar_path, class_name, epa_path, criterion, search_budget, runid, method, results_dir_name):
+    def __init__(self, name, junit_jar, code_dir, instrumented_code_dir, original_code_dir, evosuite_classes, evosuite_jar_path, evosuite_runtime_jar_path, class_name, epa_path, criterion, search_budget, runid, method, results_dir_name, mujava_home, mujava_mutants_dir, hamcrest_jar_path):
         threading.Thread.__init__(self)
 
         self.subdir_testgen = os.path.join(results_dir_name, "testgen", name, search_budget, criterion.replace(':', '_').lower(), "{}".format(runid))
@@ -227,6 +232,7 @@ class RunTestEPA(threading.Thread):
         self.generated_test_dir = os.path.join(self.subdir_testgen, 'test')
         self.generated_report_evosuite_dir = os.path.join(self.subdir_testgen, 'report_evosuite')
         self.generated_report_pitest_dir = os.path.join(self.subdir_testgen, 'report_pitest')
+        self.generated_report_mujava = os.path.join(self.subdir_testgen, 'report_mujava')
         self.search_budget = search_budget
         self.runid = runid
 
@@ -235,6 +241,10 @@ class RunTestEPA(threading.Thread):
         self.compiled_original_code_dir = os.path.join(self.home_dir, self.subdir_testgen, "compiled", "original")
         self.compiled_instrumented_code_dir = os.path.join(self.home_dir, self.subdir_testgen, "compiled", "instrumented")
         self.method = method
+        
+        self.mujava_home = mujava_home
+        self.mujava_mutants_dir = mujava_mutants_dir
+        self.hamcrest_jar_path = hamcrest_jar_path 
 
     def run(self):
         if self.method in [EpatestingMethod.TESTGEN.value, EpatestingMethod.BOTH.value]:
@@ -255,6 +265,8 @@ class RunTestEPA(threading.Thread):
 
             # Run Pitest to measure
             pitest_measure(self.generated_report_pitest_dir, self.class_name, "{}_ESTest".format(self.class_name), self.original_code_dir, self.generated_test_dir)
+            
+            mujava_measure(self.mujava_mutants_dir, self.compiled_original_code_dir, self.generated_test_dir, self.class_name, self.junit_jar, self.hamcrest_jar_path, self.generated_report_mujava)
 
             # Resume the reports generated
             all_report_dir = os.path.join(self.subdir_metrics, 'all_reports')
@@ -273,7 +285,8 @@ class RunTestEPA(threading.Thread):
             mutations_csv = os.path.join(all_report_dir, "{}_mutations.csv".format(self.name))
             resume_csv = os.path.join(self.subdir_metrics, 'resume.csv')
             criterion = get_alternative_criterion_names(self.criterion)
-            make_report_resume(self.class_name, epacoverage_csv, jacoco_csv, mutations_csv, resume_csv, self.runid, self.search_budget, criterion)
+            mujava_csv = os.path.join(self.generated_report_mujava, "mujava_report.csv")
+            make_report_resume(self.class_name, epacoverage_csv, jacoco_csv, mutations_csv, resume_csv, self.runid, self.search_budget, criterion, mujava_csv)
             
 def get_alternative_criterion_names(criterion):
     if (criterion == "line:branch"):
