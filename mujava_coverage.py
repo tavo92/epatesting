@@ -7,14 +7,16 @@ import utils
 
 class MuJava:
     
-    def __init__(self, dir_mutants, orig_class_bin_dir, test_suite_bin, test_suite_name, junit_path, hamcrest_path, output_dir):
+    def __init__(self, mujava_home, dir_mutants, orig_class_bin_dir, test_suite_bin, test_suite_name, junit_path, hamcrest_path, output_dir):
+        self.mujava_home = mujava_home
         self.dir_mutants = dir_mutants
         self.orig_class_bin_dir = orig_class_bin_dir
         self.test_suite_bin = test_suite_bin
-        self.test_suite_name = test_suite_name
+        self.test_suite_name = test_suite_name + "_ESTest"
         self.junit_path = junit_path
         self.hamcrest_jar = hamcrest_path
         self.output_dir = output_dir
+
         
     def compute_mutation_score(self):
         print("Running mutation score...")
@@ -31,29 +33,50 @@ class MuJava:
                 if os.listdir(dirpath) == []:
                         print("ERROR! MUTANT DIR: {} must not be empty! Check it!".format(mutant_dir))
                         exit(1)
+                        
+        def load_mutants_err_prot(file):
+            with open(file) as f:
+                content = f.readlines()
+            err_prot_mutant_list = []
+            for line in content:
+                err_prot_mutant_list.append(line.replace("\n", ""))
+            return err_prot_mutant_list
+    
         
         total = 0
         killed = 0
-        curr_subject = self.test_suite_name.replace("Test","")
+        err_prot = 0
+        curr_subject = self.test_suite_name.replace("_ESTest","")
         curr_subject_dir = os.path.join(self.dir_mutants, curr_subject)
+        mutant_subject_dir = os.path.join(self.mujava_home, "result", curr_subject, "err_prot_list.txt")
+        err_prot_mutant_list = load_mutants_err_prot(mutant_subject_dir)
         for curr_mutant in os.listdir(curr_subject_dir):
-            curr_mutant = os.path.join(curr_subject_dir, curr_mutant)
+            curr_mutant_dir = os.path.join(curr_subject_dir, curr_mutant)
             # only check dirs
-            if not os.path.isdir(curr_mutant):
+            if not os.path.isdir(curr_mutant_dir):
                 continue
-            check_empty_dir(curr_mutant)
-            is_killed = not check_alive(self, curr_mutant)
+            check_empty_dir(curr_mutant_dir)
+            is_killed = not check_alive(self, curr_mutant_dir)
             if(is_killed):
                 killed += 1
+                if curr_mutant in err_prot_mutant_list:
+                    err_prot += 1
+                
             total += 1
         if total == 0:
             print("\tNo generated mutants for: {} subject".format(curr_subject))
             exit(1)
-        save_report = "(echo TOTAL,KILLED,MUTATION_COVERAGE & echo {},{},{}) > {}{}mujava_report.csv".format(total, killed, (killed/total), self.output_dir, os.path.sep)
-        print("\tRunning: {}".format(save_report))
+        if os.path.exists(self.output_dir):
+            shutil.rmtree(self.output_dir)
+        os.makedirs(self.output_dir)
+        save_report = "echo TOTAL,KILLED,MUTATION_COVERAGE,ERRPROT> {}{}mujava_report.csv".format(self.output_dir, os.path.sep)
+        #print("\tRunning: {}".format(save_report))
+        subprocess.check_output(save_report, shell=True)
+        save_report = "echo {},{},{},{}>> {}{}mujava_report.csv".format(total, killed, (killed/total), err_prot, self.output_dir, os.path.sep)
+        #print("\tRunning: {}".format(save_report))
         subprocess.check_output(save_report, shell=True)
         
-        print("total: {} - Killed: {} - coverage: {}".format(total, killed, killed/total))
+        print("total: {} - Killed: {} - coverage: {} - error prot: {}".format(total, killed, killed/total, err_prot))
 
 
 class JUnit:
@@ -108,7 +131,7 @@ def setup_mujava(mujava_home, mutants_dir):
         if os.path.exists(new_dirs):
             shutil.rmtree(new_dirs)
         shutil.copytree(os.path.join(src_dir, operator_dir_name), new_dirs)
-
+        
     print("Setting up mujava...")
     result_dir = os.path.join(mujava_home, "result")
             
@@ -132,6 +155,7 @@ def setup_mujava(mujava_home, mutants_dir):
                 if not os.path.isdir(os.path.join(method_dir, operator_dir_name)):
                     continue
                 mk_and_cp_operator_mutant_dir(method_dir, mutants_dir, subject_dir_name, operator_dir_name, packages_dir)
+        
         
             
 if __name__ == '__main__':

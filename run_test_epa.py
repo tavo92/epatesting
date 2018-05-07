@@ -39,7 +39,7 @@ def measure_evosuite(evosuite_jar_path, projectCP, testCP, class_name, epa_path,
     sep = os.path.pathsep
     command = 'java -jar {}evosuite-master-1.0.4-SNAPSHOT.jar -projectCP {}{}{} -class {} -Depa_xml_path={} -criterion EPATRANSITION -Dwrite_covered_goals_file=\"true\" -Dwrite_all_goals_file=\"true\" -Dreport_dir={} -measureCoverage > {}_out.txt 2> {}_err.txt'.format(evosuite_jar_path, projectCP, sep, testCP, class_name, epa_path, report_dir, report_dir, report_dir)
     print_command(command)
-    subprocess.check_output(command, shell=True)
+3
 
 
 def edit_pit_pom(file_path, targetClasses, targetTests, output_file):
@@ -181,8 +181,8 @@ def pitest_measure(pitest_dir, targetClasses, targetTests, class_dir, test_dir):
 
     run_pitest(os.path.join(pitest_dir, ""))
     
-def mujava_measure(mujava_mutants_dir, compiled_original_code_dir, generated_test_dir, class_name, junit_jar, hamcrest_jar, generated_report_mujava):
-    mujava = mujava_coverage.MuJava(mujava_mutants_dir, compiled_original_code_dir, generated_test_dir, class_name, junit_jar, hamcrest_jar, generated_report_mujava)
+def mujava_measure(mujava_home, mujava_mutants_dir, compiled_original_code_dir, generated_test_dir, class_name, junit_jar, hamcrest_jar, generated_report_mujava):
+    mujava = mujava_coverage.MuJava(mujava_home, mujava_mutants_dir, compiled_original_code_dir, generated_test_dir, class_name, junit_jar, hamcrest_jar, generated_report_mujava)
     mujava.compute_mutation_score()
 
 
@@ -266,7 +266,7 @@ class RunTestEPA(threading.Thread):
             # Run Pitest to measure
             pitest_measure(self.generated_report_pitest_dir, self.class_name, "{}_ESTest".format(self.class_name), self.original_code_dir, self.generated_test_dir)
             
-            mujava_measure(self.mujava_mutants_dir, self.compiled_original_code_dir, self.generated_test_dir, self.class_name, self.junit_jar, self.hamcrest_jar_path, self.generated_report_mujava)
+            mujava_measure(self.mujava_home, self.mujava_mutants_dir, self.compiled_original_code_dir, self.generated_test_dir, self.class_name, self.junit_jar, self.hamcrest_jar_path, self.generated_report_mujava)
 
             # Resume the reports generated
             all_report_dir = os.path.join(self.subdir_metrics, 'all_reports')
