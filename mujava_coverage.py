@@ -20,12 +20,13 @@ class MuJava:
         
     def compute_mutation_score(self):
         print("Running mutation score...")
+        utils.make_dirs(self.output_dir)
         junit = JUnit(self.junit_path, self.hamcrest_jar, self.test_suite_bin)
-        original = junit.execute_testsuite(self.orig_class_bin_dir, self.test_suite_name, self.orig_class_bin_dir)
+        original = junit.execute_testsuite(self.orig_class_bin_dir, self.test_suite_name, self.output_dir, "original")
         
-        def check_alive(self, class_dir):
+        def check_alive(self, class_dir, curr_mutant):
             cp_mutant = "{}{}{}".format(class_dir, os.path.pathsep, self.orig_class_bin_dir)
-            mutant = junit.execute_testsuite(cp_mutant, self.test_suite_name, class_dir)
+            mutant = junit.execute_testsuite(cp_mutant, self.test_suite_name, self.output_dir, curr_mutant)
             return original[0] == mutant[0] and original[1] == mutant[1]
         
         def check_empty_dir(mutant_dir):
@@ -56,7 +57,7 @@ class MuJava:
             if not os.path.isdir(curr_mutant_dir):
                 continue
             check_empty_dir(curr_mutant_dir)
-            is_killed = not check_alive(self, curr_mutant_dir)
+            is_killed = not check_alive(self, curr_mutant_dir, curr_mutant)
             if(is_killed):
                 killed += 1
                 if curr_mutant in err_prot_mutant_list:
@@ -66,9 +67,7 @@ class MuJava:
         if total == 0:
             print("\tNo generated mutants for: {} subject".format(curr_subject))
             exit(1)
-        if os.path.exists(self.output_dir):
-            shutil.rmtree(self.output_dir)
-        os.makedirs(self.output_dir)
+        
         save_report = "echo TOTAL,KILLED,MUTATION_COVERAGE,ERRPROT> {}{}mujava_report.csv".format(self.output_dir, os.path.sep)
         #print("\tRunning: {}".format(save_report))
         subprocess.check_output(save_report, shell=True)
@@ -86,7 +85,7 @@ class JUnit:
         self.hamcrest_jar = hamcrest_path
         self.testsuite_bin_dir = testsuite_bin_dir
     
-    def execute_testsuite(self, class_dir, testsuite_name, output_dir):
+    def execute_testsuite(self, class_dir, testsuite_name, output_dir, id_name):
         def read_results(result):
             
             def all_ok(line):
@@ -97,30 +96,35 @@ class JUnit:
                     return [[int(s) for s in line.replace("(","").split(" ") if s.isdigit()][0], 0]
                 ret = [int(s) for s in line.replace(",","").replace("\n","").split(" ") if s.isdigit()]
                 return ret
-                
             
-            with open(result) as f:
-                content = f.readlines()
-            last_line = ""
-            for line in content:
-                if re.match(r'^\s*$', line):#line empty
-                    continue
-                else:
-                    last_line = line
+            def getLineWithTestResults(result):
+                with open(result) as f:
+                    content = f.readlines()
+                last_line = ""
+                for line in content:
+                    if re.match(r'^\s*$', line):#line empty
+                        continue
+                    else:
+                        last_line = line
+                return last_line
+            
+            last_line = getLineWithTestResults(result)
             #print("Last Line: {}".format(last_line))
-            total = get_values(last_line)[0]
-            failure = get_values(last_line)[1]
+            total, failure = get_values(last_line)
+            #failure = get_values(last_line)[1]
             return [total, failure]
         
         sep = os.path.pathsep
         output_dir += os.path.sep
-        command_junit = "java -cp {}{}{}{}{}{}{} org.junit.runner.JUnitCore {} > {}mujava_out.txt 2> {}mujava_err.txt".format(self.junit_path, sep, self.hamcrest_jar, sep, class_dir, sep, self.testsuite_bin_dir, testsuite_name, output_dir, output_dir)
+        junit_log_name = "_junit_out.txt"
+        junit_log_error_name = "_junit_err.txt"
+        command_junit = "java -cp {}{}{}{}{}{}{} org.junit.runner.JUnitCore {} > {}{}{} 2> {}{}{}".format(self.junit_path, sep, self.hamcrest_jar, sep, class_dir, sep, self.testsuite_bin_dir, testsuite_name, output_dir, id_name, junit_log_name, output_dir, id_name, junit_log_error_name)
         #print("\tRunning: {}".format(command_junit))
         try:
             subprocess.check_output(command_junit, shell=True)
         except:
             None
-        ret = read_results("{}mujava_out.txt".format(output_dir))
+        ret = read_results("{}{}{}".format(output_dir, id_name, junit_log_name))
         return ret
     
 
@@ -182,5 +186,3 @@ if __name__ == '__main__':
     mujava.compute_mutation_score()
     
     print("Done!")
-                
-    

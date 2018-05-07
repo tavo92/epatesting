@@ -280,12 +280,14 @@ class RunTestEPA(threading.Thread):
             statistics_csv = os.path.join(self.generated_report_evosuite_dir, "statistics.csv")
             copy_csv(statistics_csv, 'epacoverage_{}'.format(self.name), all_report_dir)
             
+            mujava_csv = os.path.join(self.generated_report_mujava, "mujava_report.csv")
+            copy_csv(mujava_csv, 'mujava_{}'.format(self.name), all_report_dir)
+            
             epacoverage_csv = os.path.join(all_report_dir, "epacoverage_{}.csv".format(self.name))
             jacoco_csv = os.path.join(all_report_dir, "{}_jacoco.csv".format(self.name))
             mutations_csv = os.path.join(all_report_dir, "{}_mutations.csv".format(self.name))
             resume_csv = os.path.join(self.subdir_metrics, 'resume.csv')
             criterion = get_alternative_criterion_names(self.criterion)
-            mujava_csv = os.path.join(self.generated_report_mujava, "mujava_report.csv")
             make_report_resume(self.class_name, epacoverage_csv, jacoco_csv, mutations_csv, resume_csv, self.runid, self.search_budget, criterion, mujava_csv)
             
 def get_alternative_criterion_names(criterion):
