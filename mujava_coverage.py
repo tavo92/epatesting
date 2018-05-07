@@ -115,7 +115,7 @@ class JUnit:
         sep = os.path.pathsep
         output_dir += os.path.sep
         command_junit = "java -cp {}{}{}{}{}{}{} org.junit.runner.JUnitCore {} > {}mujava_out.txt 2> {}mujava_err.txt".format(self.junit_path, sep, self.hamcrest_jar, sep, class_dir, sep, self.testsuite_bin_dir, testsuite_name, output_dir, output_dir)
-        print("\tRunning: {}".format(command_junit))
+        #print("\tRunning: {}".format(command_junit))
         try:
             subprocess.check_output(command_junit, shell=True)
         except:
