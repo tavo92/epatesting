@@ -46,7 +46,7 @@ class MuJava:
         
         total = 0
         killed = 0
-        err_prot = 0
+        err_prot_killed = 0
         curr_subject = self.test_suite_name.replace("_ESTest","")
         curr_subject_dir = os.path.join(self.dir_mutants, curr_subject)
         mutant_subject_dir = os.path.join(self.mujava_home, "result", curr_subject, "err_prot_list.txt")
@@ -61,21 +61,22 @@ class MuJava:
             if(is_killed):
                 killed += 1
                 if curr_mutant in err_prot_mutant_list:
-                    err_prot += 1
+                    err_prot_killed += 1
                 
             total += 1
         if total == 0:
             print("\tNo generated mutants for: {} subject".format(curr_subject))
             exit(1)
         
-        save_report = "echo TOTAL,KILLED,MUTATION_COVERAGE,ERRPROT> {}{}mujava_report.csv".format(self.output_dir, os.path.sep)
+        save_report = "echo TOTAL,KILLED,MUTATION_COVERAGE,ERRPROTTOT,ERRPROT> {}{}mujava_report.csv".format(self.output_dir, os.path.sep)
         #print("\tRunning: {}".format(save_report))
         subprocess.check_output(save_report, shell=True)
-        save_report = "echo {},{},{},{}>> {}{}mujava_report.csv".format(total, killed, (killed/total), err_prot, self.output_dir, os.path.sep)
+        err_prot = err_prot_killed / len(err_prot_mutant_list)
+        save_report = "echo {},{},{},{},{}>> {}{}mujava_report.csv".format(total, killed, (killed/total), err_prot_killed, err_prot, self.output_dir, os.path.sep)
         #print("\tRunning: {}".format(save_report))
         subprocess.check_output(save_report, shell=True)
         
-        print("total: {} - Killed: {} - coverage: {} - error prot: {}".format(total, killed, killed/total, err_prot))
+        print("total: {} - Killed: {} - coverage: {} - error_prot_killed: {} - Err prot: {}".format(total, killed, killed/total, err_prot_killed, err_prot))
 
 
 class JUnit:
@@ -178,11 +179,10 @@ if __name__ == '__main__':
     #C:\Users\JGodoy\Documents\MuJava\junit.jar
     parser.add_argument("hamcrest_jar", help="Path a hamcrest_jar.jar")
     #C:\Users\JGodoy\Documents\MuJava\org.hamcrest.core_1.3.0.v201303031735.jar
+    parser.add_argument("output_dir", help="Output dir to save info")
     args = parser.parse_args()
     
     setup_mujava(args.mujava_home, args.mutants_dir)
-    
     mujava = MuJava(args.mutants_dir, args.orig_class_bin_name, args.test_suite_bin, args.test_suite_name, args.junit_path, args.hamcrest_jar, args.mutants_dir)
     mujava.compute_mutation_score()
-    
     print("Done!")

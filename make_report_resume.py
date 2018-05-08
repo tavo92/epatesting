@@ -1,13 +1,13 @@
 import csv
 
-header_names = ['ID', 'BUD', 'SUBJ', 'TOOL', 'LINE', 'BRNCH', 'EPA', 'ERR', 'NERR', 'TERR', 'MUT', 'TIME', 'LOC', 'PIMUT', 'ERRF', 'MJMUT', 'ERRPROT']
+header_names = ['ID', 'BUD', 'SUBJ', 'TOOL', 'LINE', 'BRNCH', 'EPA', 'ERR', 'NERR', 'TERR', 'MUT', 'TIME', 'LOC', 'PIMUT', 'ERRF', 'MJMUT', 'ERRPROTKILLED', 'ERRPROT']
 
 def write_row(writer, row):
     writer.writerow({'ID': row[0], 'BUD': row[1], 'SUBJ': row[2], 'TOOL': row[3], 'LINE': row[4], 'BRNCH': row[5], 'EPA': row[6], 'ERR': row[7],
-                     'NERR': row[8], 'TERR': row[9], 'MUT': row[10], 'TIME': row[11], 'LOC': row[12], 'PIMUT': row[13], 'ERRF': row[14], 'MJMUT': row[15], 'ERRPROT': row[16]});
+                     'NERR': row[8], 'TERR': row[9], 'MUT': row[10], 'TIME': row[11], 'LOC': row[12], 'PIMUT': row[13], 'ERRF': row[14], 'MJMUT': row[15], 'ERRPROTKILLED': row[16], 'ERRPROT': row[17]});
                      
 def get_complete_row(row):
-    return [row[0], row[1], row[2], row[3], row[4], row[5], row[6], 'N/A', 'N/A', 'N/A', 'N/A', 'N/A', 'N/A', row[7], 'N/A', row[8], row[9]]
+    return [row[0], row[1], row[2], row[3], row[4], row[5], row[6], 'N/A', 'N/A', 'N/A', 'N/A', 'N/A', 'N/A', row[7], 'N/A', row[8], row[9], row[10]]
 
 def read_evosuite_csv(file_path):
     with open(file_path, newline='') as csvfile:
@@ -50,22 +50,24 @@ def read_pit_csv(file_path):
 
 def read_mujava_coverage_csv(mujava_csv):
     coverage = 0.0
-    err_prot = 0
+    err_prot_total = 0
+    err_prot = 0.0
     with open(mujava_csv, newline='') as csvfile:
         reader = csv.reader(csvfile)
         next(reader)
         for row in reader:
             coverage = row[2]
-            err_prot = row[3]
-    return coverage, err_prot
+            err_prot_total = row[3]
+            err_prot = row[4]
+    return coverage, err_prot_total, err_prot
 
 
 def report_resume_row(target_class, evosuite, jacoco, pit, runid, search_budget, criterion, mujava_csv):
     epa_coverage = read_evosuite_csv(evosuite)
     branch_coverage, line_coverage = read_jacoco_csv(target_class, jacoco)
     mutation_coverage = read_pit_csv(pit)
-    mujava_coverage, err_prot_total = read_mujava_coverage_csv(mujava_csv)
-    row = [runid, search_budget, target_class, criterion, line_coverage, branch_coverage, epa_coverage, mutation_coverage, mujava_coverage, err_prot_total]
+    mujava_coverage, err_prot_killed, err_prot = read_mujava_coverage_csv(mujava_csv)
+    row = [runid, search_budget, target_class, criterion, line_coverage, branch_coverage, epa_coverage, mutation_coverage, mujava_coverage, err_prot_killed, err_prot]
     return row
 
 
