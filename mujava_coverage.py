@@ -47,6 +47,7 @@ class MuJava:
         total = 0
         killed = 0
         err_prot_killed = 0
+        err_no_prot = 0
         curr_subject = self.test_suite_name.replace("_ESTest","")
         curr_subject_dir = os.path.join(self.dir_mutants, curr_subject)
         mutant_subject_dir = os.path.join(self.mujava_home, "result", curr_subject, "err_prot_list.txt")
@@ -62,21 +63,23 @@ class MuJava:
                 killed += 1
                 if curr_mutant in err_prot_mutant_list:
                     err_prot_killed += 1
+                else:
+                    err_no_prot += 1
                 
             total += 1
         if total == 0:
             print("\tNo generated mutants for: {} subject".format(curr_subject))
             exit(1)
         
-        save_report = "echo TOTAL,KILLED,MUTATION_COVERAGE,ERRPROTTOT,ERRPROT> {}{}mujava_report.csv".format(self.output_dir, os.path.sep)
+        save_report = "echo TOTAL,KILLED,MUTATION_COVERAGE,ERRPROTTOT,ERRPROT, ERRNOPROT> {}{}mujava_report.csv".format(self.output_dir, os.path.sep)
         #print("\tRunning: {}".format(save_report))
         subprocess.check_output(save_report, shell=True)
         err_prot = err_prot_killed / len(err_prot_mutant_list)
-        save_report = "echo {},{},{},{},{}>> {}{}mujava_report.csv".format(total, killed, (killed/total), err_prot_killed, err_prot, self.output_dir, os.path.sep)
+        save_report = "echo {},{},{},{},{},{}>> {}{}mujava_report.csv".format(total, killed, (killed/total), err_prot_killed, err_prot, err_no_prot, self.output_dir, os.path.sep)
         #print("\tRunning: {}".format(save_report))
         subprocess.check_output(save_report, shell=True)
         
-        print("total: {} - Killed: {} - coverage: {} - error_prot_killed: {} - Err prot: {}".format(total, killed, killed/total, err_prot_killed, err_prot))
+        print("total: {} - Killed: {} - coverage: {} - error_prot_killed: {} - Err prot: {} - Err NO prot: {}".format(total, killed, killed/total, err_prot_killed, err_prot, err_no_prot))
 
 
 class JUnit:
