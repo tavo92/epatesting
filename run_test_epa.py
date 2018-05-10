@@ -8,6 +8,7 @@ from enum import Enum
 from make_report_resume import make_report_resume
 from sys import platform
 import mujava_coverage
+import utils
 
 
 class EpatestingMethod(Enum):
@@ -30,10 +31,15 @@ def find_and_save_command(toFind, saveIn):
 
 
 def run_evosuite(evosuite_jar_path, projectCP, class_name, criterion, epa_path, search_budget, test_dir='test', report_dir='report'):
-    command = 'java -jar {}evosuite-master-1.0.4-SNAPSHOT.jar -projectCP {} -class {} -criterion {} -Dsearch_budget={} -Djunit_allow_restricted_libraries=true -Dp_functional_mocking=\"0.0\" -Dp_reflection_on_private=\"0.0\" -Duse_separate_classloader=\"false\" -Dwrite_covered_goals_file=\"true\" -Dwrite_all_goals_file=\"true\" -Dprint_missed_goals=\"true\" -Dtest_dir={} -Dreport_dir={} -Depa_xml_path={} -Dno_runtime_dependency=\"true\" -Dassertions=\"false\" -Dshow_progress=\"false\" > {}out.txt 2> {}err.txt'.format(evosuite_jar_path, projectCP, class_name, criterion, search_budget, test_dir, report_dir, epa_path, test_dir, test_dir)
+    command = 'java -jar {}evosuite-master-1.0.4-SNAPSHOT.jar -projectCP {} -class {} -criterion {} -Dsearch_budget={} -Djunit_allow_restricted_libraries=true -Dp_functional_mocking=\"0.0\" -Dp_reflection_on_private=\"0.0\" -Duse_separate_classloader=\"false\" -Dwrite_covered_goals_file=\"true\" -Dwrite_all_goals_file=\"true\" -Dprint_missed_goals=\"true\" -Dtest_dir={} -Dreport_dir={} -Depa_xml_path={} -Dno_runtime_dependency=\"true\" -Dassertions=\"true\" -Dshow_progress=\"false\" > {}out.txt 2> {}err.txt'.format(evosuite_jar_path, projectCP, class_name, criterion, search_budget, test_dir, report_dir, epa_path, test_dir, test_dir)
     print_command(command)
     subprocess.check_output(command, shell=True)
 
+def workaround_test(test_dir, class_name, file_name):
+    packages = class_name.split(".")[0:-1]
+    packages_dir = utils.get_package_dir(packages)
+    java_file = os.path.join(test_dir, packages_dir, file_name)
+    utils.replace_assert_catch_in_tests(java_file)
 
 def measure_evosuite(evosuite_jar_path, projectCP, testCP, class_name, epa_path, report_dir):
     sep = os.path.pathsep
@@ -256,6 +262,7 @@ class RunTestEPA(threading.Thread):
 
             # Run Evosuite
             run_evosuite(evosuite_jar_path=self.evosuite_jar_path, projectCP=self.compiled_code_dir, class_name=self.class_name, criterion=self.criterion, epa_path=self.epa_path, test_dir=self.generated_test_dir, search_budget=self.search_budget, report_dir=self.generated_report_evosuite_dir)
+            workaround_test(self.generated_test_dir, self.class_name, self.class_name.split(".")[-1]+"_ESTest.java")
 
             compile_test_workdir(self.generated_test_dir, self.code_dir, self.junit_jar, self.evosuite_classes, self.evosuite_runtime_jar_path)
 

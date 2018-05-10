@@ -48,6 +48,8 @@ class MuJava:
         killed = 0
         err_prot_killed = 0
         err_no_prot = 0
+        err_no_prot_list = []
+        no_error_list = []
         curr_subject = self.test_suite_name.replace("_ESTest","")
         curr_subject_dir = os.path.join(self.dir_mutants, curr_subject)
         mutant_subject_dir = os.path.join(self.mujava_home, "result", curr_subject, "err_prot_list.txt")
@@ -65,21 +67,40 @@ class MuJava:
                     err_prot_killed += 1
                 else:
                     err_no_prot += 1
+                    err_no_prot_list.append(curr_mutant + ": " + os.path.join(self.output_dir, curr_mutant))
+            else:
+                if curr_mutant in err_prot_mutant_list:
+                    no_error_list.append(curr_mutant + ": " + os.path.join(self.output_dir, curr_mutant))
                 
             total += 1
         if total == 0:
             print("\tNo generated mutants for: {} subject".format(curr_subject))
             exit(1)
         
-        save_report = "echo TOTAL,KILLED,MUTATION_COVERAGE,ERRPROTTOT,ERRPROT, ERRNOPROT> {}{}mujava_report.csv".format(self.output_dir, os.path.sep)
+        save_report = "echo TOTAL,KILLED,MUTATION_COVERAGE,ERRPROTTOT,ERRPROT,ERRNOPROT> {}{}mujava_report.csv".format(self.output_dir, os.path.sep)
         #print("\tRunning: {}".format(save_report))
         subprocess.check_output(save_report, shell=True)
         err_prot = err_prot_killed / len(err_prot_mutant_list)
-        save_report = "echo {},{},{},{},{},{}>> {}{}mujava_report.csv".format(total, killed, (killed/total), err_prot_killed, err_prot, err_no_prot, self.output_dir, os.path.sep)
+        save_report = "echo {},{},{},{},{},{} >> {}{}mujava_report.csv".format(total, killed, killed/total, err_prot_killed, err_prot, err_no_prot, self.output_dir, os.path.sep)
         #print("\tRunning: {}".format(save_report))
         subprocess.check_output(save_report, shell=True)
         
         print("total: {} - Killed: {} - coverage: {} - error_prot_killed: {} - Err prot: {} - Err NO prot: {}".format(total, killed, killed/total, err_prot_killed, err_prot, err_no_prot))
+        extra_info = "Errores detectados pero que no son de protocolo {}------------------------\n".format(len(err_no_prot_list))
+        i = 0
+        for __ in err_no_prot_list:
+            extra_info += "\n" + err_no_prot_list[i]
+            i += 1
+        extra_info += "\n\n\n\n"
+        extra_info += "Mutantes sobrevivientes pero clasificados como de protocolo {}------------------------\n".format(len(no_error_list))
+        i = 0
+        for __ in no_error_list:
+            extra_info += "\n" + no_error_list[i]
+            i += 1
+        print("\n\n")
+        
+        utils.save_file(os.path.join(self.output_dir, "extra_info.txt"), extra_info)
+        print(extra_info)
 
 
 class JUnit:
