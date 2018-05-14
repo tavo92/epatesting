@@ -5,6 +5,7 @@ import re
 import shutil
 import utils
 
+running_cmd = ""
 class MuJava:
     
     def __init__(self, mujava_home, dir_mutants, orig_class_bin_dir, test_suite_bin, test_suite_name, junit_path, hamcrest_path, output_dir):
@@ -19,10 +20,13 @@ class MuJava:
 
         
     def compute_mutation_score(self):
+        global running_cmd
         print("Running mutation score...")
         utils.make_dirs(self.output_dir)
         junit = JUnit(self.junit_path, self.hamcrest_jar, self.test_suite_bin)
         original = junit.execute_testsuite(self.orig_class_bin_dir, self.test_suite_name, self.output_dir, "original")
+        running_cmd += "\nORIGINAL <-------------------------------------------------------------------------------------------\n\n"
+        
         
         def check_alive(self, class_dir, curr_mutant):
             cp_mutant = "{}{}{}".format(class_dir, os.path.pathsep, self.orig_class_bin_dir)
@@ -43,7 +47,6 @@ class MuJava:
                 err_prot_mutant_list.append(line.replace("\n", ""))
             return err_prot_mutant_list
     
-        
         total = 0
         killed = 0
         err_prot_killed = 0
@@ -78,14 +81,13 @@ class MuJava:
             exit(1)
         
         save_report = "echo TOTAL,KILLED,MUTATION_COVERAGE,ERRPROTTOT,ERRPROT,ERRNOPROT> {}{}mujava_report.csv".format(self.output_dir, os.path.sep)
-        #print("\tRunning: {}".format(save_report))
         subprocess.check_output(save_report, shell=True)
         err_prot = err_prot_killed / len(err_prot_mutant_list)
         save_report = "echo {},{},{},{},{},{} >> {}{}mujava_report.csv".format(total, killed, killed/total, err_prot_killed, err_prot, err_no_prot, self.output_dir, os.path.sep)
-        #print("\tRunning: {}".format(save_report))
         subprocess.check_output(save_report, shell=True)
         
-        print("total: {} - Killed: {} - coverage: {} - error_prot_killed: {} - Err prot: {} - Err NO prot: {}".format(total, killed, killed/total, err_prot_killed, err_prot, err_no_prot))
+        utils.save_file(os.path.join(self.output_dir, "running_info.txt"), running_cmd)
+        #print("total: {} - Killed: {} - coverage: {} - error_prot_killed: {} - Err prot: {} - Err NO prot: {}".format(total, killed, killed/total, err_prot_killed, err_prot, err_no_prot))
         extra_info = "Errores detectados pero que no son de protocolo {}------------------------\n".format(len(err_no_prot_list))
         i = 0
         for __ in err_no_prot_list:
@@ -100,7 +102,7 @@ class MuJava:
         print("\n\n")
         
         utils.save_file(os.path.join(self.output_dir, "extra_info.txt"), extra_info)
-        print(extra_info)
+        #print(extra_info)
 
 
 class JUnit:
@@ -111,6 +113,7 @@ class JUnit:
         self.testsuite_bin_dir = testsuite_bin_dir
     
     def execute_testsuite(self, class_dir, testsuite_name, output_dir, id_name):
+        global running_cmd
         def read_results(result):
             
             def all_ok(line):
@@ -134,9 +137,7 @@ class JUnit:
                 return last_line
             
             last_line = getLineWithTestResults(result)
-            #print("Last Line: {}".format(last_line))
             total, failure = get_values(last_line)
-            #failure = get_values(last_line)[1]
             return [total, failure]
         
         sep = os.path.pathsep
@@ -145,11 +146,13 @@ class JUnit:
         junit_log_error_name = "_junit_err.txt"
         command_junit = "java -cp {}{}{}{}{}{}{} org.junit.runner.JUnitCore {} > {}{}{} 2> {}{}{}".format(self.junit_path, sep, self.hamcrest_jar, sep, class_dir, sep, self.testsuite_bin_dir, testsuite_name, output_dir, id_name, junit_log_name, output_dir, id_name, junit_log_error_name)
         #print("\tRunning: {}".format(command_junit))
+        running_cmd += "\nRunning: {}".format(command_junit)
         try:
             subprocess.check_output(command_junit, shell=True)
         except:
             None
         ret = read_results("{}{}{}".format(output_dir, id_name, junit_log_name))
+        running_cmd += "\n\tResults: {}{}{} , Total: {} - Failure: {}\n".format(output_dir, id_name, junit_log_name, ret[0], ret[1])
         return ret
     
 
