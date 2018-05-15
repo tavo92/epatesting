@@ -22,7 +22,7 @@ class MuJava:
     def compute_mutation_score(self):
         global running_cmd
         print("Running mutation score...")
-        utils.make_dirs(self.output_dir)
+        utils.remove_and_make_dirs(self.output_dir)
         junit = JUnit(self.junit_path, self.hamcrest_jar, self.test_suite_bin)
         original = junit.execute_testsuite(self.orig_class_bin_dir, self.test_suite_name, self.output_dir, "original")
         running_cmd += "\nORIGINAL <-------------------------------------------------------------------------------------------\n\n"

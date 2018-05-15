@@ -31,7 +31,7 @@ def find_and_save_command(toFind, saveIn):
 
 
 def run_evosuite(evosuite_jar_path, projectCP, class_name, criterion, epa_path, search_budget, test_dir='test', report_dir='report'):
-    command = 'java -jar {}evosuite-master-1.0.4-SNAPSHOT.jar -projectCP {} -class {} -criterion {} -Dsearch_budget={} -Djunit_allow_restricted_libraries=true -Dp_functional_mocking=\"0.0\" -Dp_reflection_on_private=\"0.0\" -Duse_separate_classloader=\"false\" -Dwrite_covered_goals_file=\"true\" -Dwrite_all_goals_file=\"true\" -Dprint_missed_goals=\"true\" -Dtest_dir={} -Dreport_dir={} -Depa_xml_path={} -Dno_runtime_dependency=\"true\" -Dassertions=\"true\" -Dshow_progress=\"false\" > {}out.txt 2> {}err.txt'.format(evosuite_jar_path, projectCP, class_name, criterion, search_budget, test_dir, report_dir, epa_path, test_dir, test_dir)
+    command = 'java -jar {}evosuite-master-1.0.4-SNAPSHOT.jar -projectCP {} -class {} -criterion {} -Dsearch_budget={} -Djunit_allow_restricted_libraries=true -Dp_functional_mocking=\"0.0\" -Dp_reflection_on_private=\"0.0\" -Duse_separate_classloader=\"false\" -Dwrite_covered_goals_file=\"true\" -Dwrite_all_goals_file=\"true\" -Dprint_missed_goals=\"true\" -Dtest_dir={} -Dreport_dir={} -Depa_xml_path={} -Dno_runtime_dependency=\"true\" -Dassertions=\"true\" -Dshow_progress=\"false\" > {}ge_out.txt 2> {}gen_err.txt'.format(evosuite_jar_path, projectCP, class_name, criterion, search_budget, test_dir, report_dir, epa_path, test_dir, test_dir)
     print_command(command)
     subprocess.check_output(command, shell=True)
 
@@ -42,10 +42,13 @@ def workaround_test(test_dir, class_name, file_name):
     utils.replace_assert_catch_in_tests(java_file)
 
 def measure_evosuite(evosuite_jar_path, projectCP, testCP, class_name, epa_path, report_dir):
+    utils.make_dirs_if_not_exist(report_dir)
+    err_file = os.path.join(report_dir, "epatransition_err.txt")
+    out_file = os.path.join(report_dir, "epatransition_out.txt")
     sep = os.path.pathsep
-    command = 'java -jar {}evosuite-master-1.0.4-SNAPSHOT.jar -projectCP {}{}{} -class {} -Depa_xml_path={} -criterion EPATRANSITION -Dwrite_covered_goals_file=\"true\" -Dwrite_all_goals_file=\"true\" -Dreport_dir={} -measureCoverage > {}_out.txt 2> {}_err.txt'.format(evosuite_jar_path, projectCP, sep, testCP, class_name, epa_path, report_dir, report_dir, report_dir)
+    command = 'java -jar {}evosuite-master-1.0.4-SNAPSHOT.jar -projectCP {}{}{} -class {} -Depa_xml_path={} -criterion EPATRANSITION -Dwrite_covered_goals_file=\"true\" -Dwrite_all_goals_file=\"true\" -Dreport_dir={} -measureCoverage > {} 2> {}'.format(evosuite_jar_path, projectCP, sep, testCP, class_name, epa_path, report_dir, out_file, err_file)
     print_command(command)
-3
+    subprocess.check_output(command, shell=True)
 
 
 def edit_pit_pom(file_path, targetClasses, targetTests, output_file):
@@ -236,9 +239,9 @@ class RunTestEPA(threading.Thread):
         self.epa_path = epa_path
         self.criterion = criterion
         self.generated_test_dir = os.path.join(self.subdir_testgen, 'test')
-        self.generated_report_evosuite_dir = os.path.join(self.subdir_testgen, 'report_evosuite')
-        self.generated_report_pitest_dir = os.path.join(self.subdir_testgen, 'report_pitest')
-        self.generated_report_mujava = os.path.join(self.subdir_testgen, 'report_mujava')
+        self.generated_report_evosuite_dir = os.path.join(self.subdir_metrics, 'report_evosuite')
+        self.generated_report_pitest_dir = os.path.join(self.subdir_metrics, 'report_pitest')
+        self.generated_report_mujava = os.path.join(self.subdir_metrics, 'report_mujava')
         self.search_budget = search_budget
         self.runid = runid
 
@@ -261,7 +264,8 @@ class RunTestEPA(threading.Thread):
             compile_workdir(self.instrumented_code_dir, self.evosuite_classes, self.compiled_instrumented_code_dir)
 
             # Run Evosuite
-            run_evosuite(evosuite_jar_path=self.evosuite_jar_path, projectCP=self.compiled_code_dir, class_name=self.class_name, criterion=self.criterion, epa_path=self.epa_path, test_dir=self.generated_test_dir, search_budget=self.search_budget, report_dir=self.generated_report_evosuite_dir)
+            generated_test_report_evosuite_dir = os.path.join(self.subdir_testgen, 'report_evosuite_generated_test')
+            run_evosuite(evosuite_jar_path=self.evosuite_jar_path, projectCP=self.compiled_code_dir, class_name=self.class_name, criterion=self.criterion, epa_path=self.epa_path, test_dir=self.generated_test_dir, search_budget=self.search_budget, report_dir=generated_test_report_evosuite_dir)
             workaround_test(self.generated_test_dir, self.class_name, self.class_name.split(".")[-1]+"_ESTest.java")
 
             compile_test_workdir(self.generated_test_dir, self.code_dir, self.junit_jar, self.evosuite_classes, self.evosuite_runtime_jar_path)

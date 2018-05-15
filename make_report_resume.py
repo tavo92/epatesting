@@ -13,8 +13,10 @@ def read_evosuite_csv(file_path):
     with open(file_path, newline='') as csvfile:
         reader = csv.DictReader(csvfile)
         for row in reader:
-            coverage = row['Coverage']
-    return coverage
+            if 'EPATRANSITION' == row['criterion']:
+                return row['Coverage']
+    print("ERROR!!! EPATRANSITION NOT GENERATED! Dir: {} ".format(file_path))
+    return 'N/A'
 
 
 def read_jacoco_csv(target_class, file_path):
