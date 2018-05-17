@@ -6,10 +6,8 @@ import shutil
 from enum import Enum
 
 from make_report_resume import make_report_resume
-from sys import platform
 import mujava_coverage
 import utils
-
 
 class EpatestingMethod(Enum):
     TESTGEN = 1
@@ -17,22 +15,9 @@ class EpatestingMethod(Enum):
     BOTH = 3
 
 
-def print_command(command, workdir=None):
-    print('Executing command in shell:')
-    if workdir is not None:
-        print('In workdir: {}'.format(workdir))
-    print(command)
-    
-def find_and_save_command(toFind, saveIn):
-    command_win = "FORFILES /S /M {} /C \"CMD /C echo|set /p=@relpath & echo:\" > {}".format(toFind, saveIn)
-    command_unix = "find . -name '{}' > {}".format(toFind, saveIn)
-    command_find = command_win if (platform == "win32") else command_unix
-    return command_find
-
-
 def run_evosuite(evosuite_jar_path, projectCP, class_name, criterion, epa_path, search_budget, test_dir='test', report_dir='report'):
     command = 'java -jar {}evosuite-master-1.0.4-SNAPSHOT.jar -projectCP {} -class {} -criterion {} -Dsearch_budget={} -Djunit_allow_restricted_libraries=true -Dp_functional_mocking=\"0.0\" -Dp_reflection_on_private=\"0.0\" -Duse_separate_classloader=\"false\" -Dwrite_covered_goals_file=\"true\" -Dwrite_all_goals_file=\"true\" -Dprint_missed_goals=\"true\" -Dtest_dir={} -Dreport_dir={} -Depa_xml_path={} -Dno_runtime_dependency=\"true\" -Dassertions=\"true\" -Dshow_progress=\"false\" > {}ge_out.txt 2> {}gen_err.txt'.format(evosuite_jar_path, projectCP, class_name, criterion, search_budget, test_dir, report_dir, epa_path, test_dir, test_dir)
-    print_command(command)
+    utils.print_command(command)
     subprocess.check_output(command, shell=True)
 
 def workaround_test(test_dir, class_name, file_name):
@@ -47,7 +32,7 @@ def measure_evosuite(evosuite_jar_path, projectCP, testCP, class_name, epa_path,
     out_file = os.path.join(report_dir, "epatransition_out.txt")
     sep = os.path.pathsep
     command = 'java -jar {}evosuite-master-1.0.4-SNAPSHOT.jar -projectCP {}{}{} -class {} -Depa_xml_path={} -criterion EPATRANSITION -Dwrite_covered_goals_file=\"true\" -Dwrite_all_goals_file=\"true\" -Dreport_dir={} -measureCoverage > {} 2> {}'.format(evosuite_jar_path, projectCP, sep, testCP, class_name, epa_path, report_dir, out_file, err_file)
-    print_command(command)
+    utils.print_command(command)
     subprocess.check_output(command, shell=True)
 
 
@@ -81,52 +66,8 @@ def edit_pit_pom(file_path, targetClasses, targetTests, output_file):
 
 def run_pitest(workdir):
     command = "mvn clean install org.pitest:pitest-maven:mutationCoverage > {}out.txt 2> {}err.txt".format(workdir, workdir)
-    print_command(command, workdir)
+    utils.print_command(command, workdir)
     subprocess.check_output(command, cwd=workdir, shell=True)
-
-
-lock = threading.Lock()
-def lock_if_windows():
-    if(platform == "win32"):
-        lock.acquire()
-
-def release_if_windows():
-    if(platform == "win32"):
-        lock.release()
-
-
-def compile_workdir(workdir, evosuite_classes, output_directory):
-    command_find = find_and_save_command("*.java", "sources.txt")
-    print_command(command_find, workdir)
-    
-    lock_if_windows()
-    subprocess.check_output(command_find, cwd=workdir, shell=True)
-    release_if_windows()
-
-    print_command("mkdir {}".format(output_directory))
-    if not os.path.exists(output_directory):
-        os.makedirs(output_directory)
-
-    command_compile = "javac -classpath {} -d {} @sources.txt".format(evosuite_classes, output_directory)
-    print_command(command_compile, workdir)
-    lock_if_windows()
-    subprocess.check_output(command_compile, cwd=workdir, shell=True)
-    release_if_windows()
-
-
-def compile_test_workdir(workdir, subject_class, junit_jar, evosuite_classes, evosuite_runtime_jar_path):
-    command_find = find_and_save_command("*.java", "sources.txt")
-    print_command(command_find, workdir)
-    lock_if_windows()
-    subprocess.check_output(command_find, cwd=workdir, shell=True)
-    release_if_windows()
-
-    sep = os.path.pathsep
-    command_compile = "javac -classpath {}{}{}{}{}{}{} @sources.txt".format(junit_jar, sep, subject_class, sep, evosuite_classes, sep, evosuite_runtime_jar_path)
-    print_command(command_compile, workdir)
-    lock_if_windows()
-    subprocess.check_output(command_compile, cwd=workdir, shell=True)
-    release_if_windows()
 
 
 def generate_pitest_workdir(pitest_dir):
@@ -135,36 +76,36 @@ def generate_pitest_workdir(pitest_dir):
     # src/main/java/ < source code we want to test
     # src/test/java/ < testsuite
     command_mkdir_home = "mkdir {}".format(pitest_dir)
-    print_command(command_mkdir_home)
+    utils.print_command(command_mkdir_home)
     if not os.path.exists(pitest_dir):
         os.makedirs(pitest_dir)
     pitest_dir_src = os.path.join(pitest_dir, "src");
     command_mkdir_src = "mkdir {}".format(pitest_dir_src)
-    print_command(command_mkdir_src)
+    utils.print_command(command_mkdir_src)
     if not os.path.exists(pitest_dir_src):
         os.makedirs(pitest_dir_src)
 
     pitest_dir_src_main = os.path.join(pitest_dir, "src", "main");
     command_mkdir_src_main = "mkdir {}".format(pitest_dir_src_main)
-    print_command(command_mkdir_src_main)
+    utils.print_command(command_mkdir_src_main)
     if not os.path.exists(pitest_dir_src_main):
         os.makedirs(pitest_dir_src_main)
 
     pitest_dir_src_main_java = os.path.join(pitest_dir, "src", "main", "java")
     command_mkdir_src_main_java = "mkdir {}".format(pitest_dir_src_main_java)
-    print_command(command_mkdir_src_main_java)
+    utils.print_command(command_mkdir_src_main_java)
     if not os.path.exists(pitest_dir_src_main_java):
         os.makedirs(pitest_dir_src_main_java)
     
     pitest_dir_src_test = os.path.join(pitest_dir, "src", "test")
     command_mkdir_src_test = "mkdir {}".format(pitest_dir_src_test)
-    print_command(command_mkdir_src_test)
+    utils.print_command(command_mkdir_src_test)
     if not os.path.exists(pitest_dir_src_test):
         os.makedirs(pitest_dir_src_test)
         
     pitest_dir_src_test_java = os.path.join(pitest_dir, "src", "test", "java")        
     command_mkdir_src_test_java = "mkdir {}".format(pitest_dir_src_test_java)
-    print_command(command_mkdir_src_test_java)
+    utils.print_command(command_mkdir_src_test_java)
     if not os.path.exists(pitest_dir_src_test_java):
         os.makedirs(pitest_dir_src_test_java)
 
@@ -175,7 +116,7 @@ def pitest_measure(pitest_dir, targetClasses, targetTests, class_dir, test_dir):
 
     pitest_dir_src_main_java = os.path.join(pitest_dir, "src", "main", "java")
     command_copy_source = 'cp -r {}/* {}'.format(class_dir, pitest_dir_src_main_java)
-    print_command(command_copy_source)
+    utils.print_command(command_copy_source)
     # Si existe el directorio lo elimino (sino tira error shutil.copytree)
     if os.path.exists(pitest_dir_src_main_java):
         shutil.rmtree(pitest_dir_src_main_java)
@@ -183,32 +124,32 @@ def pitest_measure(pitest_dir, targetClasses, targetTests, class_dir, test_dir):
     
     pitest_dir_src_test_java = os.path.join(pitest_dir, "src", "test", "java")
     command_copy_test = 'cp -r {}/* {}'.format(test_dir, pitest_dir_src_test_java)
-    print_command(command_copy_test)
+    utils.print_command(command_copy_test)
     if os.path.exists(pitest_dir_src_test_java):
         shutil.rmtree(pitest_dir_src_test_java)
     shutil.copytree(test_dir, pitest_dir_src_test_java)
 
     run_pitest(os.path.join(pitest_dir, ""))
     
-def mujava_measure(mujava_home, mujava_mutants_dir, compiled_original_code_dir, generated_test_dir, class_name, junit_jar, hamcrest_jar, generated_report_mujava):
-    mujava = mujava_coverage.MuJava(mujava_home, mujava_mutants_dir, compiled_original_code_dir, generated_test_dir, class_name, junit_jar, hamcrest_jar, generated_report_mujava)
+def mujava_measure(subdir_mutants, error_prot_list, compiled_original_code_dir, generated_test_dir, class_name, junit_jar, hamcrest_jar, generated_report_mujava):
+    mujava = mujava_coverage.MuJava(subdir_mutants, error_prot_list, compiled_original_code_dir, generated_test_dir, class_name, junit_jar, hamcrest_jar, generated_report_mujava)
     mujava.compute_mutation_score()
 
 
 def copy_csv(file_path, file_name, all_report_dir):
     dest = os.path.join(all_report_dir, "{}.csv".format(file_name))
     command = 'cp {} {}'.format(file_path, dest)
-    print_command(command)
+    utils.print_command(command)
     shutil.copyfile(file_path, dest)
 
 
 def copy_pitest_csv(name, workdir, all_report_dir):
-    command = find_and_save_command("*.csv", "sources.txt")
-    print_command(command, workdir)
+    command = utils.find_and_save_command("*.csv", "sources.txt")
+    utils.print_command(command, workdir)
     
-    lock_if_windows()
+    utils.lock_if_windows()
     subprocess.check_output(command, cwd=workdir, shell=True)
-    release_if_windows()
+    utils.release_if_windows()
 
     with open(os.path.join(workdir, "sources.txt")) as file:
         for line in file:
@@ -221,11 +162,12 @@ def copy_pitest_csv(name, workdir, all_report_dir):
 
 class RunTestEPA(threading.Thread):
 
-    def __init__(self, name, junit_jar, code_dir, instrumented_code_dir, original_code_dir, evosuite_classes, evosuite_jar_path, evosuite_runtime_jar_path, class_name, epa_path, criterion, search_budget, runid, method, results_dir_name, mujava_home, mujava_mutants_dir, hamcrest_jar_path):
+    def __init__(self, name, junit_jar, code_dir, instrumented_code_dir, original_code_dir, evosuite_classes, evosuite_jar_path, evosuite_runtime_jar_path, class_name, epa_path, criterion, search_budget, runid, method, results_dir_name, subdir_mutants, error_prot_list, hamcrest_jar_path):
         threading.Thread.__init__(self)
 
         self.subdir_testgen = os.path.join(results_dir_name, "testgen", name, search_budget, criterion.replace(':', '_').lower(), "{}".format(runid))
         self.subdir_metrics = os.path.join(results_dir_name, "metrics", name, search_budget, criterion.replace(':', '_').lower(), "{}".format(runid))
+        self.subdir_mutants = os.path.join(results_dir_name, "mutants")
 
         self.name = name
         self.junit_jar = junit_jar
@@ -251,38 +193,47 @@ class RunTestEPA(threading.Thread):
         self.compiled_instrumented_code_dir = os.path.join(self.home_dir, self.subdir_testgen, "compiled", "instrumented")
         self.method = method
         
-        self.mujava_home = mujava_home
-        self.mujava_mutants_dir = mujava_mutants_dir
+        self.mutants_dir = subdir_mutants
+        self.error_prot_list = error_prot_list
         self.hamcrest_jar_path = hamcrest_jar_path 
 
     def run(self):
         if self.method in [EpatestingMethod.TESTGEN.value, EpatestingMethod.BOTH.value]:
             print('GENERATING TESTS')
             # Compile code
-            compile_workdir(self.code_dir, self.evosuite_classes, self.compiled_code_dir)
-            compile_workdir(self.original_code_dir, self.evosuite_classes, self.compiled_original_code_dir)
-            compile_workdir(self.instrumented_code_dir, self.evosuite_classes, self.compiled_instrumented_code_dir)
-
+            #lock_if_windows()
+            utils.compile_workdir(self.code_dir, self.compiled_code_dir, self.evosuite_classes)
+            utils.compile_workdir(self.original_code_dir, self.compiled_original_code_dir, self.evosuite_classes)
+            utils.compile_workdir(self.instrumented_code_dir, self.compiled_instrumented_code_dir, self.evosuite_classes)
+            #release_if_windows()
+            
+            #Copy and compile mujava directories
+            mujava_coverage.setup_mujava(self.mutants_dir, self.class_name, self.subdir_mutants, self.compiled_code_dir, self.error_prot_list)
+            
             # Run Evosuite
             generated_test_report_evosuite_dir = os.path.join(self.subdir_testgen, 'report_evosuite_generated_test')
             run_evosuite(evosuite_jar_path=self.evosuite_jar_path, projectCP=self.compiled_code_dir, class_name=self.class_name, criterion=self.criterion, epa_path=self.epa_path, test_dir=self.generated_test_dir, search_budget=self.search_budget, report_dir=generated_test_report_evosuite_dir)
             workaround_test(self.generated_test_dir, self.class_name, self.class_name.split(".")[-1]+"_ESTest.java")
 
-            compile_test_workdir(self.generated_test_dir, self.code_dir, self.junit_jar, self.evosuite_classes, self.evosuite_runtime_jar_path)
+            utils.compile_workdir(self.generated_test_dir, self.generated_test_dir, self.code_dir, self.junit_jar, self.evosuite_classes, self.evosuite_runtime_jar_path)
 
         if self.method in [EpatestingMethod.METRICS.value, EpatestingMethod.BOTH.value]:
             print('GENERATING METRICS')
+            if not os.path.exists(self.subdir_testgen):
+                print("not found testgen folder !")
+                exit(1)
+                
             measure_evosuite(evosuite_jar_path=self.evosuite_jar_path, projectCP=self.compiled_instrumented_code_dir, testCP=self.generated_test_dir, class_name=self.class_name, epa_path=self.epa_path, report_dir=self.generated_report_evosuite_dir)
 
             # Run Pitest to measure
             pitest_measure(self.generated_report_pitest_dir, self.class_name, "{}_ESTest".format(self.class_name), self.original_code_dir, self.generated_test_dir)
             
-            mujava_measure(self.mujava_home, self.mujava_mutants_dir, self.compiled_original_code_dir, self.generated_test_dir, self.class_name, self.junit_jar, self.hamcrest_jar_path, self.generated_report_mujava)
+            mujava_measure(self.subdir_mutants, self.error_prot_list, self.compiled_original_code_dir, self.generated_test_dir, self.class_name, self.junit_jar, self.hamcrest_jar_path, self.generated_report_mujava)
 
             # Resume the reports generated
             all_report_dir = os.path.join(self.subdir_metrics, 'all_reports')
             command_mkdir_report = 'mkdir {}'.format(all_report_dir)
-            print_command(command_mkdir_report)
+            utils.print_command(command_mkdir_report)
             if not os.path.exists(all_report_dir):
                 os.makedirs(all_report_dir)
 

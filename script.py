@@ -5,17 +5,18 @@ from run_test_epa import RunTestEPA
 from make_report_resume import merge_all_resumes
 import os
 import time
-import mujava_coverage
 
 class Subject:
 
-    def __init__(self, name, code_dir, instrumented_code_dir, original_code_dir, class_name, epa_path):
+    def __init__(self, name, code_dir, instrumented_code_dir, original_code_dir, class_name, epa_path, mutants_dir, error_prot_list):
         self.name = name
         self.code_dir = code_dir
         self.instrumented_code_dir = instrumented_code_dir
         self.original_code_dir = original_code_dir
         self.class_name = class_name
         self.epa_path = epa_path
+        self.mutants_dir = mutants_dir
+        self.error_prot_list = error_prot_list
 
 
 class EPAConfig:
@@ -42,10 +43,6 @@ class EPAConfig:
         self.results_dir_name = replace_paths_separator(config['DEFAULT']['ResultsDirName'])
         self.results_dir_name = os.path.join(user_home_dir, self.results_dir_name)
         self.workers = int(config['DEFAULT']['Workers'])
-        self.mujava_home = replace_paths_separator(config['DEFAULT']['MujavaHome'])
-        self.mujava_home = os.path.join(user_home_dir, self.mujava_home)
-        self.mujava_mutants_dir = replace_paths_separator(config['DEFAULT']['MutantsDir'])
-        self.mujava_mutants_dir = os.path.join(user_home_dir, self.mujava_mutants_dir)
         self.hamcrest_jar_path = replace_paths_separator(config['DEFAULT']['HamcrestJarPath'])
         self.hamcrest_jar_path = os.path.join(user_home_dir, self.hamcrest_jar_path)
 
@@ -65,7 +62,11 @@ class EPAConfig:
             class_name = config[section]['ClassName']
             epa_path = replace_paths_separator(config[section]['EPAPath'])
             epa_path = os.path.join(user_home_dir, epa_path)
-            self.subjects[section] = Subject(name, code_dir, instrumented_code_dir, original_code_dir, class_name, epa_path)
+            mutants_dir = replace_paths_separator(config[section]['MutantsDir'])
+            mutants_dir = os.path.join(user_home_dir, mutants_dir)
+            error_prot_list = replace_paths_separator(config[section]['ErrorProtList'])
+            error_prot_list = os.path.join(user_home_dir, error_prot_list)
+            self.subjects[section] = Subject(name, code_dir, instrumented_code_dir, original_code_dir, class_name, epa_path, mutants_dir, error_prot_list)
             
 
     def read_runs_file(self, runs_file):
@@ -98,7 +99,7 @@ class EPAConfig:
                         runid = 0
                         for __ in range(rep):
                             subject = self.subjects[subject_name]
-                            tests_to_run.append(RunTestEPA(name=subject.name, junit_jar=self.junit_jar, code_dir=subject.code_dir, instrumented_code_dir=subject.instrumented_code_dir, original_code_dir=subject.original_code_dir, evosuite_classes=self.evosuite_classes, evosuite_jar_path=self.evosuite_jar_path, evosuite_runtime_jar_path=self.evosuite_runtime_jar_path, class_name=subject.class_name, epa_path=subject.epa_path, criterion=criterion, search_budget=search_budget, runid=runid, method=method, results_dir_name=self.results_dir_name, mujava_home=self.mujava_home, mujava_mutants_dir=self.mujava_mutants_dir, hamcrest_jar_path=self.hamcrest_jar_path))
+                            tests_to_run.append(RunTestEPA(name=subject.name, junit_jar=self.junit_jar, code_dir=subject.code_dir, instrumented_code_dir=subject.instrumented_code_dir, original_code_dir=subject.original_code_dir, evosuite_classes=self.evosuite_classes, evosuite_jar_path=self.evosuite_jar_path, evosuite_runtime_jar_path=self.evosuite_runtime_jar_path, class_name=subject.class_name, epa_path=subject.epa_path, criterion=criterion, search_budget=search_budget, runid=runid, method=method, results_dir_name=self.results_dir_name, subdir_mutants=subject.mutants_dir, error_prot_list=subject.error_prot_list, hamcrest_jar_path=self.hamcrest_jar_path))
                             runid += 1
 
         return [tests_to_run[x:x + self.workers] for x in range(0, len(tests_to_run), self.workers)]
@@ -132,9 +133,6 @@ if __name__ == '__main__':
     # Run all the tests
     config.read_config_file(args.config_file)
     test_chunks = config.read_runs_file(args.runs_file)
-    
-    #Copy mujava directories
-    mujava_coverage.setup_mujava(config.mujava_home, config.mujava_mutants_dir)
     
     all_resumes = []
     total_subjects = 0
