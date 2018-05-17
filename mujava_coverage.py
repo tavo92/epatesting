@@ -2,14 +2,14 @@ import argparse
 import os
 import subprocess
 import re
-import shutil
 import utils
+import shutil
 
 class MuJava:
     
-    def __init__(self, mujava_home, dir_mutants, orig_class_bin_dir, test_suite_bin, test_suite_name, junit_path, hamcrest_path, output_dir):
-        self.mujava_home = mujava_home
-        self.dir_mutants = dir_mutants
+    def __init__(self, subdir_mutants, error_prot_list, orig_class_bin_dir, test_suite_bin, test_suite_name, junit_path, hamcrest_path, output_dir):
+        self.mutants_dir = subdir_mutants
+        self.error_prot_list = error_prot_list
         self.orig_class_bin_dir = orig_class_bin_dir
         self.test_suite_bin = test_suite_bin
         self.test_suite_name = test_suite_name + "_ESTest"
@@ -111,9 +111,8 @@ class MuJava:
         total = 0; killed = 0; err_prot_killed = 0; err_no_prot = 0
         err_no_prot_list = []; no_error_list = []
         curr_subject = self.test_suite_name.replace("_ESTest","")
-        curr_subject_dir = os.path.join(self.dir_mutants, curr_subject)
-        mutant_subject_dir = os.path.join(self.mujava_home, "result", curr_subject, "err_prot_list.txt")
-        err_prot_mutant_list = load_mutants_err_prot(mutant_subject_dir)
+        err_prot_mutant_list = load_mutants_err_prot(self.error_prot_list)
+        curr_subject_dir = os.path.join(self.mutants_dir, curr_subject)
         for curr_mutant in os.listdir(curr_subject_dir):
             curr_mutant_dir = os.path.join(curr_subject_dir, curr_mutant)
             # only check dirs
@@ -134,51 +133,51 @@ class MuJava:
                 
             total += 1
         if total == 0:
-            print("\tNo generated mutants for: {} subject".format(curr_subject))
+            print("\tNo generated mutants for {}:{}".format(curr_subject, self.mutants_dir))
             exit(1)
         err_prot = err_prot_killed / len(err_prot_mutant_list)
         save_report_mujava(total, killed, err_prot_killed, err_prot, err_no_prot)
         save_run_info(total, killed, err_prot_killed, err_no_prot)
         
-
-def setup_mujava(mujava_home, mutants_dir):
-    def mk_and_cp_operator_mutant_dir(src_dir, mutants_dir, subject_name, operator_dir_name, packages_dir):
-        new_dirs = os.path.join(mutants_dir, subject_name, operator_dir_name, packages_dir)
-        if os.path.exists(new_dirs):
-            shutil.rmtree(new_dirs)
-        shutil.copytree(os.path.join(src_dir, operator_dir_name), new_dirs)
+def setup_mujava(origin_mutants_dir, subject_name, subdir_mutants, original_code_dir, error_prot_list):
+    def mk_and_cp_operator_mutant_dir(src_dir, subject_name, operator_dir_name, packages_dir):
+        new_dirs = os.path.join(subdir_mutants, subject_name, operator_dir_name)
+        new_dirs_packages = os.path.join(new_dirs, packages_dir)
+        src_dir = os.path.join(src_dir, operator_dir_name)
+        if os.path.exists(new_dirs):# si existe el directorio, debería contener los .class
+            return
+        shutil.copytree(src_dir, new_dirs_packages)
+        utils.compile_workdir(new_dirs, new_dirs, new_dirs, original_code_dir)
         
     print("Setting up mujava...")
-    result_dir = os.path.join(mujava_home, "result")
-            
-    for subject_dir_name in os.listdir(result_dir):
-        packages = subject_dir_name.split(".")[0:-1]
-        packages_dir = utils.get_package_dir(packages)
-        subject_dir = os.path.join(result_dir, subject_dir_name)
-        class_mutant_dir = os.path.join(subject_dir, "class_mutants")
-        traditional_mutant_dir = os.path.join(subject_dir, "traditional_mutants")
-        
-        for operator_dir_name in os.listdir(class_mutant_dir):
-            if not os.path.isdir(os.path.join(class_mutant_dir,operator_dir_name)):
+    packages = subject_name.split(".")[0:-1]
+    packages_dir = utils.get_package_dir(packages)
+    # subject_dir = os.path.join(result_dir, subject_dir_name)
+    class_mutant_dir = os.path.join(origin_mutants_dir, "class_mutants")
+    traditional_mutant_dir = os.path.join(origin_mutants_dir, "traditional_mutants")
+    
+    for operator_dir_name in os.listdir(class_mutant_dir):
+        if not os.path.isdir(os.path.join(class_mutant_dir,operator_dir_name)):
+            continue
+        mk_and_cp_operator_mutant_dir(class_mutant_dir, subject_name, operator_dir_name, packages_dir)
+    
+    for method_dir_name in os.listdir(traditional_mutant_dir):
+        method_dir = os.path.join(traditional_mutant_dir, method_dir_name)
+        if not os.path.isdir(method_dir):
+            continue
+        for operator_dir_name in os.listdir(method_dir):
+            if not os.path.isdir(os.path.join(method_dir, operator_dir_name)):
                 continue
-            mk_and_cp_operator_mutant_dir(class_mutant_dir, mutants_dir, subject_dir_name, operator_dir_name, packages_dir)
-        
-        for method_dir_name in os.listdir(traditional_mutant_dir):
-            method_dir = os.path.join(traditional_mutant_dir, method_dir_name)
-            if not os.path.isdir(method_dir):
-                continue
-            for operator_dir_name in os.listdir(method_dir):
-                if not os.path.isdir(os.path.join(method_dir, operator_dir_name)):
-                    continue
-                mk_and_cp_operator_mutant_dir(method_dir, mutants_dir, subject_dir_name, operator_dir_name, packages_dir)
-        
-        
+            mk_and_cp_operator_mutant_dir(method_dir, subject_name, operator_dir_name, packages_dir)
+    dst = os.path.join(subdir_mutants, subject_name)
+    shutil.copy(error_prot_list, dst)
+
             
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("mutants_dir", help="Directorio donde estan los mutantes")
     #C:\Users\JGodoy\workspace-epa\epatesting\mutants
-    parser.add_argument("mujava_home", help="Directorio donde estan los mutantes")
+    parser.add_argument("mutants_dir", help="Directorio donde estan los mutantes")
     #C:\Users\JGodoy\Documents\MuJava
     parser.add_argument("orig_class_bin_name", help="Path al archivo .class original")
     #workspace-epa/evosuite-subjects/workdir/socket/original
@@ -193,7 +192,7 @@ if __name__ == '__main__':
     parser.add_argument("output_dir", help="Output dir to save info")
     args = parser.parse_args()
     
-    setup_mujava(args.mujava_home, args.mutants_dir)
+    #setup_mujava(args.mutants_dir, args.mutants_dir)
     mujava = MuJava(args.mutants_dir, args.orig_class_bin_name, args.test_suite_bin, args.test_suite_name, args.junit_path, args.hamcrest_jar, args.mutants_dir)
     mujava.compute_mutation_score()
     print("Done!")
