@@ -5,7 +5,6 @@ import re
 import shutil
 import utils
 
-running_cmd = ""
 class MuJava:
     
     def __init__(self, mujava_home, dir_mutants, orig_class_bin_dir, test_suite_bin, test_suite_name, junit_path, hamcrest_path, output_dir):
@@ -17,20 +16,61 @@ class MuJava:
         self.junit_path = junit_path
         self.hamcrest_jar = hamcrest_path
         self.output_dir = output_dir
-
+        self.running_cmd = ""
         
     def compute_mutation_score(self):
-        global running_cmd
-        print("Running mutation score...")
-        utils.remove_and_make_dirs(self.output_dir)
-        junit = JUnit(self.junit_path, self.hamcrest_jar, self.test_suite_bin)
-        original = junit.execute_testsuite(self.orig_class_bin_dir, self.test_suite_name, self.output_dir, "original")
-        running_cmd += "\nORIGINAL <-------------------------------------------------------------------------------------------\n\n"
+        def execute_testsuite(class_dir, testsuite_name, output_dir, id_name):
+            def read_results(result):
+                def get_line_with_test_results(result):
+                    with open(result) as f:
+                        content = f.readlines()
+                    last_line = ""
+                    for line in content:
+                        if re.match(r'^\s*$', line):#line empty
+                            continue
+                        else:
+                            last_line = line
+                    return last_line
+                
+                def get_total_and_failures(line):
+                    def all_test_ok(line):
+                        return "OK" in line
+                    
+                    if all_test_ok(line):
+                        return [[int(s) for s in line.replace("(","").split(" ") if s.isdigit()][0], 0]
+                    ret = [int(s) for s in line.replace(",","").replace("\n","").split(" ") if s.isdigit()]
+                    return ret
+                
+                last_line = get_line_with_test_results(result)
+                total, failure = get_total_and_failures(last_line)
+                return [total, failure]
+
+            sep = os.path.pathsep
+            output_dir = os.path.join(output_dir, "junit_results")
+            utils.make_dirs_if_not_exist(output_dir)
+            junit_log_name = id_name + "_junit_out.txt"
+            junit_log_error_name = id_name + "_junit_err.txt"
+            command_junit = "java -cp {}{}{}{}{}{}{} org.junit.runner.JUnitCore {} > {}{}{} 2> {}{}{}".format(self.junit_path, sep, self.hamcrest_jar, sep, class_dir, sep, self.test_suite_bin, testsuite_name, output_dir, os.path.sep, junit_log_name, output_dir, os.path.sep, junit_log_error_name)
+            self.running_cmd += "\nRunning: {}".format(command_junit)
+            try:
+                subprocess.check_output(command_junit, shell=True)
+            except:
+                None
+            ret = read_results("{}{}{}".format(output_dir, os.path.sep, junit_log_name))
+            self.running_cmd += "\n\tResults: {}{} , Total: {} - Failure: {}\n".format(output_dir, junit_log_name, ret[0], ret[1])
+            return ret
         
+        def load_mutants_err_prot(file):
+            with open(file) as f:
+                content = f.readlines()
+            err_prot_mutant_list = []
+            for line in content:
+                err_prot_mutant_list.append(line.replace("\n", ""))
+            return err_prot_mutant_list
         
         def check_alive(self, class_dir, curr_mutant):
             cp_mutant = "{}{}{}".format(class_dir, os.path.pathsep, self.orig_class_bin_dir)
-            mutant = junit.execute_testsuite(cp_mutant, self.test_suite_name, self.output_dir, curr_mutant)
+            mutant = execute_testsuite(cp_mutant, self.test_suite_name, self.output_dir, curr_mutant)
             return original[0] == mutant[0] and original[1] == mutant[1]
         
         def check_empty_dir(mutant_dir):
@@ -39,20 +79,37 @@ class MuJava:
                         print("ERROR! MUTANT DIR: {} must not be empty! Check it!".format(mutant_dir))
                         exit(1)
                         
-        def load_mutants_err_prot(file):
-            with open(file) as f:
-                content = f.readlines()
-            err_prot_mutant_list = []
-            for line in content:
-                err_prot_mutant_list.append(line.replace("\n", ""))
-            return err_prot_mutant_list
-    
-        total = 0
-        killed = 0
-        err_prot_killed = 0
-        err_no_prot = 0
-        err_no_prot_list = []
-        no_error_list = []
+        def save_report_mujava(total, killed, err_prot_killed, err_prot, err_no_prot):
+            save_report = "echo TOTAL,KILLED,MUTATION_COVERAGE,ERRPROTTOT,ERRPROT,ERRNOPROT> {}{}mujava_report.csv".format(self.output_dir, os.path.sep)
+            subprocess.check_output(save_report, shell=True)
+            save_report = "echo {},{},{},{},{},{} >> {}{}mujava_report.csv".format(total, killed, killed/total, err_prot_killed, err_prot, err_no_prot, self.output_dir, os.path.sep)
+            subprocess.check_output(save_report, shell=True)
+        
+        def save_run_info(total, killed, err_prot_killed, err_no_prot):
+            utils.save_file(os.path.join(self.output_dir, "running_info.txt"), self.running_cmd)
+            extra_info = "\nTotal: {} - Killed: {} - coverage: {} - error_prot_killed: {} - Err prot: {} - Err NO prot: {}\n".format(total, killed, killed/total, err_prot_killed, err_prot, err_no_prot)
+            extra_info += "Errores detectados pero que no son de protocolo {}------------------------\n".format(len(err_no_prot_list))
+            i = 0
+            for __ in err_no_prot_list:
+                extra_info += "\n" + err_no_prot_list[i]
+                i += 1
+            extra_info += "\n\n\n\n"
+            extra_info += "Mutantes sobrevivientes pero clasificados como de protocolo {}------------------------\n".format(len(no_error_list))
+            i = 0
+            for __ in no_error_list:
+                extra_info += "\n" + no_error_list[i]
+                i += 1
+            utils.save_file(os.path.join(self.output_dir, "extra_info.txt"), extra_info)
+
+
+# Prepare mujava mutants structure for future mutation score analysis
+
+        print("Running mutation score...")
+        utils.remove_and_make_dirs(self.output_dir)
+        original = execute_testsuite(self.orig_class_bin_dir, self.test_suite_name, self.output_dir, "original")
+        self.running_cmd += "\nORIGINAL <-------------------------------------------------------------------------------------------\n\n"
+        total = 0; killed = 0; err_prot_killed = 0; err_no_prot = 0
+        err_no_prot_list = []; no_error_list = []
         curr_subject = self.test_suite_name.replace("_ESTest","")
         curr_subject_dir = os.path.join(self.dir_mutants, curr_subject)
         mutant_subject_dir = os.path.join(self.mujava_home, "result", curr_subject, "err_prot_list.txt")
@@ -79,84 +136,11 @@ class MuJava:
         if total == 0:
             print("\tNo generated mutants for: {} subject".format(curr_subject))
             exit(1)
-        
-        save_report = "echo TOTAL,KILLED,MUTATION_COVERAGE,ERRPROTTOT,ERRPROT,ERRNOPROT> {}{}mujava_report.csv".format(self.output_dir, os.path.sep)
-        subprocess.check_output(save_report, shell=True)
         err_prot = err_prot_killed / len(err_prot_mutant_list)
-        save_report = "echo {},{},{},{},{},{} >> {}{}mujava_report.csv".format(total, killed, killed/total, err_prot_killed, err_prot, err_no_prot, self.output_dir, os.path.sep)
-        subprocess.check_output(save_report, shell=True)
+        save_report_mujava(total, killed, err_prot_killed, err_prot, err_no_prot)
+        save_run_info(total, killed, err_prot_killed, err_no_prot)
         
-        utils.save_file(os.path.join(self.output_dir, "running_info.txt"), running_cmd)
-        #print("total: {} - Killed: {} - coverage: {} - error_prot_killed: {} - Err prot: {} - Err NO prot: {}".format(total, killed, killed/total, err_prot_killed, err_prot, err_no_prot))
-        extra_info = "Errores detectados pero que no son de protocolo {}------------------------\n".format(len(err_no_prot_list))
-        i = 0
-        for __ in err_no_prot_list:
-            extra_info += "\n" + err_no_prot_list[i]
-            i += 1
-        extra_info += "\n\n\n\n"
-        extra_info += "Mutantes sobrevivientes pero clasificados como de protocolo {}------------------------\n".format(len(no_error_list))
-        i = 0
-        for __ in no_error_list:
-            extra_info += "\n" + no_error_list[i]
-            i += 1
-        print("\n\n")
-        
-        utils.save_file(os.path.join(self.output_dir, "extra_info.txt"), extra_info)
-        #print(extra_info)
 
-
-class JUnit:
-    
-    def __init__(self, junit_path, hamcrest_path, testsuite_bin_dir):
-        self.junit_path = junit_path
-        self.hamcrest_jar = hamcrest_path
-        self.testsuite_bin_dir = testsuite_bin_dir
-    
-    def execute_testsuite(self, class_dir, testsuite_name, output_dir, id_name):
-        global running_cmd
-        def read_results(result):
-            
-            def all_ok(line):
-                return "OK" in line
-            
-            def get_values(line):
-                if all_ok(line):
-                    return [[int(s) for s in line.replace("(","").split(" ") if s.isdigit()][0], 0]
-                ret = [int(s) for s in line.replace(",","").replace("\n","").split(" ") if s.isdigit()]
-                return ret
-            
-            def getLineWithTestResults(result):
-                with open(result) as f:
-                    content = f.readlines()
-                last_line = ""
-                for line in content:
-                    if re.match(r'^\s*$', line):#line empty
-                        continue
-                    else:
-                        last_line = line
-                return last_line
-            
-            last_line = getLineWithTestResults(result)
-            total, failure = get_values(last_line)
-            return [total, failure]
-        
-        sep = os.path.pathsep
-        output_dir += os.path.sep
-        junit_log_name = "_junit_out.txt"
-        junit_log_error_name = "_junit_err.txt"
-        command_junit = "java -cp {}{}{}{}{}{}{} org.junit.runner.JUnitCore {} > {}{}{} 2> {}{}{}".format(self.junit_path, sep, self.hamcrest_jar, sep, class_dir, sep, self.testsuite_bin_dir, testsuite_name, output_dir, id_name, junit_log_name, output_dir, id_name, junit_log_error_name)
-        #print("\tRunning: {}".format(command_junit))
-        running_cmd += "\nRunning: {}".format(command_junit)
-        try:
-            subprocess.check_output(command_junit, shell=True)
-        except:
-            None
-        ret = read_results("{}{}{}".format(output_dir, id_name, junit_log_name))
-        running_cmd += "\n\tResults: {}{}{} , Total: {} - Failure: {}\n".format(output_dir, id_name, junit_log_name, ret[0], ret[1])
-        return ret
-    
-
-# Prepare mujava mutants structure for future mutation score analysis
 def setup_mujava(mujava_home, mutants_dir):
     def mk_and_cp_operator_mutant_dir(src_dir, mutants_dir, subject_name, operator_dir_name, packages_dir):
         new_dirs = os.path.join(mutants_dir, subject_name, operator_dir_name, packages_dir)
