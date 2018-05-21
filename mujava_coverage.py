@@ -112,6 +112,7 @@ class MuJava:
         err_no_prot_list = []; no_error_list = []
         curr_subject = self.test_suite_name.replace("_ESTest","")
         err_prot_mutant_list = load_mutants_err_prot(self.error_prot_list)
+        utils.init_histogram(err_prot_mutant_list)
         curr_subject_dir = os.path.join(self.mutants_dir, curr_subject)
         for curr_mutant in os.listdir(curr_subject_dir):
             curr_mutant_dir = os.path.join(curr_subject_dir, curr_mutant)
@@ -122,6 +123,7 @@ class MuJava:
             is_killed = not check_alive(self, curr_mutant_dir, curr_mutant)
             if(is_killed):
                 killed += 1
+                utils.count_mutant(curr_mutant)
                 if curr_mutant in err_prot_mutant_list:
                     err_prot_killed += 1
                 else:

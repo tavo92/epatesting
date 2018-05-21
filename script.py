@@ -5,6 +5,7 @@ from run_test_epa import RunTestEPA
 from make_report_resume import merge_all_resumes
 import os
 import time
+import utils
 
 class Subject:
 
@@ -139,7 +140,7 @@ if __name__ == '__main__':
     finished_subjects = 0
     for chunk in test_chunks:
         total_subjects = total_subjects + len(chunk)
-    
+
     for chunk in test_chunks:
         for test in chunk:
             test.start()
@@ -153,6 +154,5 @@ if __name__ == '__main__':
     
     merge_all_resumes(all_resumes, 'all_resumes.csv')
     print_elapsed_time()
+    utils.save_file("histogram.txt", utils.get_mutant_histogram())
     print("Done!")
-    
-    

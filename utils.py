@@ -75,3 +75,28 @@ def lock_if_windows():
 def release_if_windows():
     if(platform == "win32"):
         lock.release()
+
+mutants_histogram = {}
+def init_histogram(error_list):
+    lock.acquire()
+    global mutants_histogram
+    if len(mutants_histogram) == 0:
+        for i in error_list:
+            mutants_histogram.update({i: 0})
+    lock.release()
+
+def count_mutant(mutant_name):
+    lock.acquire()
+    global mutants_histogram
+    value = 1
+    if mutant_name in mutants_histogram:
+        value = mutants_histogram[mutant_name] + 1
+    mutants_histogram.update({mutant_name:value})
+    lock.release()
+
+def get_mutant_histogram():
+    global mutants_histogram
+    ret = "Total mutants killed: {}".format(len(mutants_histogram))
+    for i in mutants_histogram.keys():
+        ret += "\n" + i + ", {}".format(mutants_histogram[i])
+    return ret
