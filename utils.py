@@ -95,7 +95,7 @@ def count_mutant(mutant_name_key):
 
 def get_mutant_histogram():
     global mutants_histogram
-    ret = "Total error prot list: {}".format(len(mutants_histogram))
+    ret = "Error Prot, # Killed"
     for criterion_mut in mutants_histogram.keys():
         ret += "\n{}, {}".format(criterion_mut, mutants_histogram[criterion_mut])
     return ret
