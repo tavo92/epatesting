@@ -74,7 +74,6 @@ class EPAConfig:
             lines = [line.strip() for line in lines]
 
         tests_to_run = []
-        runid = 0
         for line in lines:
             terms = line.split('*')
             subject_name = terms[0][1:-1]

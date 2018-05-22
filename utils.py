@@ -77,26 +77,25 @@ def release_if_windows():
         lock.release()
 
 mutants_histogram = {}
-def init_histogram(error_list):
+def init_histogram(criterion, error_list):
     lock.acquire()
     global mutants_histogram
-    if len(mutants_histogram) == 0:
-        for i in error_list:
-            mutants_histogram.update({i: 0})
+    for mut in error_list:
+        key = "[{}] {}".format(criterion, mut)
+        if not key in mutants_histogram:
+            mutants_histogram.update({key: 0})
     lock.release()
 
-def count_mutant(mutant_name):
+def count_mutant(mutant_name_key):
     lock.acquire()
     global mutants_histogram
-    value = 1
-    if mutant_name in mutants_histogram:
-        value = mutants_histogram[mutant_name] + 1
-    mutants_histogram.update({mutant_name:value})
+    value = mutants_histogram[mutant_name_key] + 1
+    mutants_histogram.update({mutant_name_key:value})
     lock.release()
 
 def get_mutant_histogram():
     global mutants_histogram
-    ret = "Total mutants killed: {}".format(len(mutants_histogram))
-    for i in mutants_histogram.keys():
-        ret += "\n" + i + ", {}".format(mutants_histogram[i])
+    ret = "Total error prot list: {}".format(len(mutants_histogram))
+    for criterion_mut in mutants_histogram.keys():
+        ret += "\n{}, {}".format(criterion_mut, mutants_histogram[criterion_mut])
     return ret
