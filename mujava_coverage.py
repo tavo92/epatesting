@@ -114,7 +114,6 @@ class MuJava:
         curr_subject = self.test_suite_name.replace("_ESTest","")
         err_prot_mutant_list = load_mutants_err_prot(self.error_prot_list)
         utils.init_histogram(self.criterion, err_prot_mutant_list)
-        print(self.criterion + "({})".format(len(err_prot_mutant_list)))
         curr_subject_dir = os.path.join(self.mutants_dir, curr_subject)
         for curr_mutant in os.listdir(curr_subject_dir):
             curr_mutant_dir = os.path.join(curr_subject_dir, curr_mutant)
