@@ -162,7 +162,7 @@ def copy_pitest_csv(name, workdir, all_report_dir):
 
 class RunTestEPA(threading.Thread):
 
-    def __init__(self, name, junit_jar, code_dir, instrumented_code_dir, original_code_dir, evosuite_classes, evosuite_jar_path, evosuite_runtime_jar_path, class_name, epa_path, criterion, search_budget, runid, method, results_dir_name, subdir_mutants, error_prot_list, hamcrest_jar_path):
+    def __init__(self, name, junit_jar, instrumented_code_dir, original_code_dir, evosuite_classes, evosuite_jar_path, evosuite_runtime_jar_path, class_name, epa_path, criterion, search_budget, runid, method, results_dir_name, subdir_mutants, error_prot_list, hamcrest_jar_path):
         threading.Thread.__init__(self)
 
         self.subdir_testgen = os.path.join(results_dir_name, "testgen", name, search_budget, criterion.replace(':', '_').lower(), "{}".format(runid))
@@ -171,7 +171,6 @@ class RunTestEPA(threading.Thread):
 
         self.name = name
         self.junit_jar = junit_jar
-        self.code_dir = code_dir
         self.instrumented_code_dir = instrumented_code_dir
         self.original_code_dir = original_code_dir
         self.evosuite_classes = evosuite_classes
@@ -188,7 +187,6 @@ class RunTestEPA(threading.Thread):
         self.runid = runid
 
         self.home_dir = os.path.dirname(os.path.abspath(__file__))
-        self.compiled_code_dir = os.path.join(self.home_dir, self.subdir_testgen, "compiled", "code")
         self.compiled_original_code_dir = os.path.join(self.home_dir, self.subdir_testgen, "compiled", "original")
         self.compiled_instrumented_code_dir = os.path.join(self.home_dir, self.subdir_testgen, "compiled", "instrumented")
         self.method = method
@@ -202,20 +200,20 @@ class RunTestEPA(threading.Thread):
             print('GENERATING TESTS')
             # Compile code
             #lock_if_windows()
-            utils.compile_workdir(self.code_dir, self.compiled_code_dir, self.evosuite_classes)
             utils.compile_workdir(self.original_code_dir, self.compiled_original_code_dir, self.evosuite_classes)
             utils.compile_workdir(self.instrumented_code_dir, self.compiled_instrumented_code_dir, self.evosuite_classes)
             #release_if_windows()
-            
+            code_dir = self.instrumented_code_dir if "epatesting" in self.criterion else self.original_code_dir
+            compiled_code_dir = self.compiled_instrumented_code_dir if "epatesting" in self.criterion else self.compiled_original_code_dir
             #Copy and compile mujava directories
-            mujava_coverage.setup_mujava(self.mutants_dir, self.class_name, self.subdir_mutants, self.compiled_code_dir, self.error_prot_list)
+            mujava_coverage.setup_mujava(self.mutants_dir, self.class_name, self.subdir_mutants, compiled_code_dir, self.error_prot_list)
             
             # Run Evosuite
             generated_test_report_evosuite_dir = os.path.join(self.subdir_testgen, 'report_evosuite_generated_test')
-            run_evosuite(evosuite_jar_path=self.evosuite_jar_path, projectCP=self.compiled_code_dir, class_name=self.class_name, criterion=self.criterion, epa_path=self.epa_path, test_dir=self.generated_test_dir, search_budget=self.search_budget, report_dir=generated_test_report_evosuite_dir)
+            run_evosuite(evosuite_jar_path=self.evosuite_jar_path, projectCP=compiled_code_dir, class_name=self.class_name, criterion=self.criterion, epa_path=self.epa_path, test_dir=self.generated_test_dir, search_budget=self.search_budget, report_dir=generated_test_report_evosuite_dir)
             workaround_test(self.generated_test_dir, self.class_name, self.class_name.split(".")[-1]+"_ESTest.java")
 
-            utils.compile_workdir(self.generated_test_dir, self.generated_test_dir, self.code_dir, self.junit_jar, self.evosuite_classes, self.evosuite_runtime_jar_path)
+            utils.compile_workdir(self.generated_test_dir, self.generated_test_dir, code_dir, self.junit_jar, self.evosuite_classes, self.evosuite_runtime_jar_path)
 
         if self.method in [EpatestingMethod.METRICS.value, EpatestingMethod.BOTH.value]:
             print('GENERATING METRICS')
