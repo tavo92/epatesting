@@ -26,12 +26,12 @@ def workaround_test(test_dir, class_name, file_name):
     java_file = os.path.join(test_dir, packages_dir, file_name)
     utils.replace_assert_catch_in_tests(java_file)
 
-def measure_evosuite(evosuite_jar_path, projectCP, testCP, class_name, epa_path, report_dir):
+def measure_evosuite(evosuite_jar_path, projectCP, testCP, class_name, epa_path, report_dir, criterion):
     utils.make_dirs_if_not_exist(report_dir)
-    err_file = os.path.join(report_dir, "epatransition_err.txt")
-    out_file = os.path.join(report_dir, "epatransition_out.txt")
+    err_file = os.path.join(report_dir, criterion.replace(":","_") + "_err.txt")
+    out_file = os.path.join(report_dir, criterion.replace(":","_") + "_out.txt")
     sep = os.path.pathsep
-    command = 'java -jar {}evosuite-master-1.0.4-SNAPSHOT.jar -projectCP {}{}{} -class {} -Depa_xml_path={} -criterion EPATRANSITION -Dwrite_covered_goals_file=\"true\" -Dwrite_all_goals_file=\"true\" -Dreport_dir={} -measureCoverage > {} 2> {}'.format(evosuite_jar_path, projectCP, sep, testCP, class_name, epa_path, report_dir, out_file, err_file)
+    command = 'java -jar {}evosuite-master-1.0.4-SNAPSHOT.jar -projectCP {}{}{} -class {} -Depa_xml_path={} -criterion {} -Dwrite_covered_goals_file=\"true\" -Dwrite_all_goals_file=\"true\" -Dreport_dir={} -measureCoverage > {} 2> {}'.format(evosuite_jar_path, projectCP, sep, testCP, class_name, epa_path, criterion, report_dir, out_file, err_file)
     utils.print_command(command)
     subprocess.check_output(command, shell=True)
 
@@ -219,7 +219,9 @@ class RunTestEPA(threading.Thread):
                 print("not found testgen folder !")
                 exit(1)
                 
-            measure_evosuite(evosuite_jar_path=self.evosuite_jar_path, projectCP=self.bin_instrumented_code_dir, testCP=self.generated_test_dir, class_name=self.class_name, epa_path=self.epa_path, report_dir=self.generated_report_evosuite_dir)
+            measure_evosuite(evosuite_jar_path=self.evosuite_jar_path, projectCP=self.bin_instrumented_code_dir, testCP=self.generated_test_dir, class_name=self.class_name, epa_path=self.epa_path, report_dir=self.generated_report_evosuite_dir, criterion="epatransition")
+            measure_evosuite(evosuite_jar_path=self.evosuite_jar_path, projectCP=self.bin_instrumented_code_dir, testCP=self.generated_test_dir, class_name=self.class_name, epa_path=self.epa_path, report_dir=self.generated_report_evosuite_dir, criterion="epatransition:epaerror")
+            measure_evosuite(evosuite_jar_path=self.evosuite_jar_path, projectCP=self.bin_instrumented_code_dir, testCP=self.generated_test_dir, class_name=self.class_name, epa_path=self.epa_path, report_dir=self.generated_report_evosuite_dir, criterion="epaerror")
 
             # Run Pitest to measure
             pitest_measure(self.generated_report_pitest_dir, self.class_name, "{}_ESTest".format(self.class_name), self.original_code_dir, self.generated_test_dir)
@@ -255,4 +257,4 @@ def get_alternative_criterion_names(criterion):
         criterion = "evosuite_epaalone"
     if (criterion == "line:branch:epatransition"):
         criterion = "evosuite_epamixed"
-    return criterion
+    return criterion.replace(":","_")
