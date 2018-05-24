@@ -1,6 +1,5 @@
 import os
 import shutil
-import fileinput
 import re
 import subprocess
 from sys import platform
@@ -23,11 +22,16 @@ def make_dirs_if_not_exist(path):
         os.makedirs(path)
     
 def replace_assert_catch_in_tests(java_file):
-    for line in fileinput.input(java_file, inplace=1, backup='.original'):
-        line = re.sub('\sassert','//assert', line.rstrip())
-        line = re.sub('catch\\(\w*','catch(Exception', line.rstrip())
-        print(line)
-        
+    new_file = ""
+    with open(java_file) as file:
+        for line in file:
+            line = re.sub('\sassert','//assert', line.rstrip())
+            line = re.sub('catch\\(\w*','catch(Exception', line.rstrip())
+            new_file += line+"\n"
+    
+    shutil.move(java_file, java_file+".original")
+    save_file(java_file, new_file)
+            
 def save_file(path, content):
     file = open(path,"w")
     file.write(content)
