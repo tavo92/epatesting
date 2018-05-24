@@ -131,8 +131,8 @@ def pitest_measure(pitest_dir, targetClasses, targetTests, class_dir, test_dir):
 
     run_pitest(os.path.join(pitest_dir, ""))
     
-def mujava_measure(criterion, subdir_mutants, error_prot_list, bin_original_code_dir, generated_test_dir, class_name, junit_jar, hamcrest_jar, generated_report_mujava):
-    mujava = mujava_coverage.MuJava(criterion, subdir_mutants, error_prot_list, bin_original_code_dir, generated_test_dir, class_name, junit_jar, hamcrest_jar, generated_report_mujava)
+def mujava_measure(criterion, subdir_mutants, error_prot_list, ignore_mutants_list, bin_original_code_dir, generated_test_dir, class_name, junit_jar, hamcrest_jar, generated_report_mujava):
+    mujava = mujava_coverage.MuJava(criterion, subdir_mutants, error_prot_list, ignore_mutants_list, bin_original_code_dir, generated_test_dir, class_name, junit_jar, hamcrest_jar, generated_report_mujava)
     mujava.compute_mutation_score()
 
 
@@ -162,7 +162,7 @@ def copy_pitest_csv(name, workdir, all_report_dir):
 
 class RunTestEPA(threading.Thread):
 
-    def __init__(self, name, junit_jar, instrumented_code_dir, original_code_dir, evosuite_classes, evosuite_jar_path, evosuite_runtime_jar_path, class_name, epa_path, criterion, search_budget, runid, method, results_dir_name, subdir_mutants, error_prot_list, hamcrest_jar_path):
+    def __init__(self, name, junit_jar, instrumented_code_dir, original_code_dir, evosuite_classes, evosuite_jar_path, evosuite_runtime_jar_path, class_name, epa_path, criterion, search_budget, runid, method, results_dir_name, subdir_mutants, error_prot_list, ignore_mutants_list, hamcrest_jar_path):
         threading.Thread.__init__(self)
 
         self.subdir_testgen = os.path.join(results_dir_name, "testgen", name, search_budget, criterion.replace(':', '_').lower(), "{}".format(runid))
@@ -193,6 +193,7 @@ class RunTestEPA(threading.Thread):
         
         self.mutants_dir = subdir_mutants
         self.error_prot_list = error_prot_list
+        self.ignore_mutants_list = ignore_mutants_list
         self.hamcrest_jar_path = hamcrest_jar_path 
 
     def run(self):
@@ -204,7 +205,7 @@ class RunTestEPA(threading.Thread):
             code_dir = self.instrumented_code_dir if "epa" in self.criterion else self.original_code_dir
             bin_code_dir = self.bin_instrumented_code_dir if "epa" in self.criterion else self.bin_original_code_dir
             #Copy and compile mujava directories
-            mujava_coverage.setup_mujava(self.mutants_dir, self.class_name, self.subdir_mutants, self.bin_original_code_dir, self.error_prot_list)
+            mujava_coverage.setup_mujava(self.mutants_dir, self.class_name, self.subdir_mutants, self.bin_original_code_dir, self.error_prot_list, self.ignore_mutants_list)
             
             # Run Evosuite
             generated_test_report_evosuite_dir = os.path.join(self.subdir_testgen, 'report_evosuite_generated_test')
@@ -226,7 +227,7 @@ class RunTestEPA(threading.Thread):
             # Run Pitest to measure
             pitest_measure(self.generated_report_pitest_dir, self.class_name, "{}_ESTest".format(self.class_name), self.original_code_dir, self.generated_test_dir)
             
-            mujava_measure(self.criterion, self.subdir_mutants, self.error_prot_list, self.bin_original_code_dir, self.generated_test_dir, self.class_name, self.junit_jar, self.hamcrest_jar_path, self.generated_report_mujava)
+            mujava_measure(self.criterion, self.subdir_mutants, self.error_prot_list, self.ignore_mutants_list, self.bin_original_code_dir, self.generated_test_dir, self.class_name, self.junit_jar, self.hamcrest_jar_path, self.generated_report_mujava)
 
             # Resume the reports generated
             all_report_dir = os.path.join(self.subdir_metrics, 'all_reports')

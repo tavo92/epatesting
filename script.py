@@ -9,7 +9,7 @@ import utils
 
 class Subject:
 
-    def __init__(self, name, instrumented_code_dir, original_code_dir, class_name, epa_path, mutants_dir, error_prot_list):
+    def __init__(self, name, instrumented_code_dir, original_code_dir, class_name, epa_path, mutants_dir, error_prot_list, ignore_mutants_list):
         self.name = name
         self.instrumented_code_dir = instrumented_code_dir
         self.original_code_dir = original_code_dir
@@ -17,6 +17,7 @@ class Subject:
         self.epa_path = epa_path
         self.mutants_dir = mutants_dir
         self.error_prot_list = error_prot_list
+        self.ignore_mutants_list = ignore_mutants_list
 
 
 class EPAConfig:
@@ -64,7 +65,13 @@ class EPAConfig:
             mutants_dir = os.path.join(user_home_dir, mutants_dir)
             error_prot_list = replace_paths_separator(config[section]['ErrorProtList'])
             error_prot_list = os.path.join(user_home_dir, error_prot_list)
-            self.subjects[section] = Subject(name, instrumented_code_dir, original_code_dir, class_name, epa_path, mutants_dir, error_prot_list)
+            try: # Que sea opcional tener la lista de mutantes a ignorar
+                ignore_mutants_list = replace_paths_separator(config[section]['IgnoreMutantsList'])
+                ignore_mutants_list = os.path.join(user_home_dir, ignore_mutants_list)
+            except:
+                ignore_mutants_list = ""
+                None
+            self.subjects[section] = Subject(name, instrumented_code_dir, original_code_dir, class_name, epa_path, mutants_dir, error_prot_list, ignore_mutants_list)
             
 
     def read_runs_file(self, runs_file):
@@ -85,7 +92,7 @@ class EPAConfig:
             runid = 0
             for __ in range(rep):
                 subject = self.subjects[subject_name]
-                tests_to_run.append(RunTestEPA(name=subject.name, junit_jar=self.junit_jar, instrumented_code_dir=subject.instrumented_code_dir, original_code_dir=subject.original_code_dir, evosuite_classes=self.evosuite_classes, evosuite_jar_path=self.evosuite_jar_path, evosuite_runtime_jar_path=self.evosuite_runtime_jar_path, class_name=subject.class_name, epa_path=subject.epa_path, criterion=criterion, search_budget=search_budget, runid=runid, method=method, results_dir_name=self.results_dir_name, subdir_mutants=subject.mutants_dir, error_prot_list=subject.error_prot_list, hamcrest_jar_path=self.hamcrest_jar_path))
+                tests_to_run.append(RunTestEPA(name=subject.name, junit_jar=self.junit_jar, instrumented_code_dir=subject.instrumented_code_dir, original_code_dir=subject.original_code_dir, evosuite_classes=self.evosuite_classes, evosuite_jar_path=self.evosuite_jar_path, evosuite_runtime_jar_path=self.evosuite_runtime_jar_path, class_name=subject.class_name, epa_path=subject.epa_path, criterion=criterion, search_budget=search_budget, runid=runid, method=method, results_dir_name=self.results_dir_name, subdir_mutants=subject.mutants_dir, error_prot_list=subject.error_prot_list, ignore_mutants_list=subject.ignore_mutants_list, hamcrest_jar_path=self.hamcrest_jar_path))
                 runid += 1
 
         return [tests_to_run[x:x + self.workers] for x in range(0, len(tests_to_run), self.workers)]
