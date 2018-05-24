@@ -4,6 +4,7 @@ import subprocess
 import re
 import utils
 import shutil
+import threading
 
 class MuJava:
     
@@ -143,14 +144,17 @@ class MuJava:
         save_run_info(total, killed, err_prot_killed, err_no_prot)
         
 def setup_mujava(origin_mutants_dir, subject_name, subdir_mutants, original_code_dir, error_prot_list):
+    lock = threading.Lock()
     def mk_and_cp_operator_mutant_dir(src_dir, subject_name, operator_dir_name, packages_dir):
         new_dirs = os.path.join(subdir_mutants, subject_name, operator_dir_name)
         new_dirs_packages = os.path.join(new_dirs, packages_dir)
         src_dir = os.path.join(src_dir, operator_dir_name)
-        if os.path.exists(new_dirs):# si existe el directorio, debería contener los .class
-            return
-        shutil.copytree(src_dir, new_dirs_packages)
-        utils.compile_workdir(new_dirs, new_dirs, new_dirs, original_code_dir)
+        # si existe el directorio, ya debería contener los .class, entonces no copio los mutantes ni compilo
+        lock.acquire()
+        if not os.path.exists(new_dirs):
+            shutil.copytree(src_dir, new_dirs_packages)
+            utils.compile_workdir(new_dirs, new_dirs, new_dirs, original_code_dir)
+        lock.release()
         
     print("Setting up mujava...")
     packages = subject_name.split(".")[0:-1]
