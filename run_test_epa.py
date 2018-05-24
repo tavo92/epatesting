@@ -199,14 +199,12 @@ class RunTestEPA(threading.Thread):
         if self.method in [EpatestingMethod.TESTGEN.value, EpatestingMethod.BOTH.value]:
             print('GENERATING TESTS')
             # Compile code
-            #lock_if_windows()
             utils.compile_workdir(self.original_code_dir, self.bin_original_code_dir, self.evosuite_classes)
             utils.compile_workdir(self.instrumented_code_dir, self.bin_instrumented_code_dir, self.evosuite_classes)
-            #release_if_windows()
             code_dir = self.instrumented_code_dir if "epa" in self.criterion else self.original_code_dir
             bin_code_dir = self.bin_instrumented_code_dir if "epa" in self.criterion else self.bin_original_code_dir
             #Copy and compile mujava directories
-            mujava_coverage.setup_mujava(self.mutants_dir, self.class_name, self.subdir_mutants, bin_code_dir, self.error_prot_list)
+            mujava_coverage.setup_mujava(self.mutants_dir, self.class_name, self.subdir_mutants, self.bin_original_code_dir, self.error_prot_list)
             
             # Run Evosuite
             generated_test_report_evosuite_dir = os.path.join(self.subdir_testgen, 'report_evosuite_generated_test')
