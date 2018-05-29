@@ -93,9 +93,11 @@ def load_list_from_file(file):
     return list_item
 
 mutants_histogram = {}
-def init_histogram(criterion, error_list):
+def init_histogram(criterion, error_list, ignore_list):
     global mutants_histogram
     for mut in error_list:
+        if mut in ignore_list:
+            continue
         key = "[{}] {}".format(criterion, mut)
         if not key in mutants_histogram:
             mutants_histogram.update({key: 0})

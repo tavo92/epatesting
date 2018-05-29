@@ -94,7 +94,7 @@ class EPAConfig:
             rep = int(terms[4])
             
             subject = self.subjects[subject_name]
-            utils.init_histogram(criterion, subject.error_prot_list)
+            utils.init_histogram(criterion, subject.error_prot_list, subject.ignore_mutants_list)
             runid = 0
             for __ in range(rep):
                 tests_to_run.append(RunTestEPA(name=subject.name, junit_jar=self.junit_jar, instrumented_code_dir=subject.instrumented_code_dir, original_code_dir=subject.original_code_dir, evosuite_classes=self.evosuite_classes, evosuite_jar_path=self.evosuite_jar_path, evosuite_runtime_jar_path=self.evosuite_runtime_jar_path, class_name=subject.class_name, epa_path=subject.epa_path, criterion=criterion, search_budget=search_budget, runid=runid, method=method, results_dir_name=self.results_dir_name, subdir_mutants=subject.subdir_mutants, error_prot_list=subject.error_prot_list, ignore_mutants_list=subject.ignore_mutants_list, hamcrest_jar_path=self.hamcrest_jar_path))
