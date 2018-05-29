@@ -1,4 +1,4 @@
-#### epatesting Start.sh ###
+#### epatesting Stop.sh ###
 #!/bin/bash
 
 echo "Deteniendo proceso Python..."
