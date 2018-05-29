@@ -167,7 +167,7 @@ class RunTestEPA(threading.Thread):
 
         self.subdir_testgen = os.path.join(results_dir_name, "testgen", name, search_budget, criterion.replace(':', '_').lower(), "{}".format(runid))
         self.subdir_metrics = os.path.join(results_dir_name, "metrics", name, search_budget, criterion.replace(':', '_').lower(), "{}".format(runid))
-        self.subdir_mutants = os.path.join(results_dir_name, "mutants")
+        self.subdir_mutants = subdir_mutants
 
         self.name = name
         self.junit_jar = junit_jar
@@ -191,7 +191,6 @@ class RunTestEPA(threading.Thread):
         self.bin_instrumented_code_dir = os.path.join(self.home_dir, self.subdir_testgen, "bin", "instrumented")
         self.method = method
         
-        self.mutants_dir = subdir_mutants
         self.error_prot_list = error_prot_list
         self.ignore_mutants_list = ignore_mutants_list
         self.hamcrest_jar_path = hamcrest_jar_path 
@@ -204,8 +203,6 @@ class RunTestEPA(threading.Thread):
             utils.compile_workdir(self.instrumented_code_dir, self.bin_instrumented_code_dir, self.evosuite_classes)
             code_dir = self.instrumented_code_dir if "epa" in self.criterion else self.original_code_dir
             bin_code_dir = self.bin_instrumented_code_dir if "epa" in self.criterion else self.bin_original_code_dir
-            #Copy and compile mujava directories
-            mujava_coverage.setup_mujava(self.mutants_dir, self.class_name, self.subdir_mutants, self.bin_original_code_dir, self.error_prot_list, self.ignore_mutants_list)
             
             # Run Evosuite
             generated_test_report_evosuite_dir = os.path.join(self.subdir_testgen, 'report_evosuite_generated_test')

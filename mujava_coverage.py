@@ -4,7 +4,6 @@ import subprocess
 import re
 import utils
 import shutil
-import threading
 
 class MuJava:
     
@@ -63,18 +62,6 @@ class MuJava:
             self.running_cmd += "\n\tResults: {}{} , Total: {} - Failure: {}\n".format(output_dir, junit_log_name, ret[0], ret[1])
             return ret
         
-        def load_mutants_list(file):
-            try:
-                with open(file) as f:
-                    content = f.readlines()
-            except FileNotFoundError:
-                print("ignore_mutant_list does not exists!")
-                return []
-            mutant_list = []
-            for line in content:
-                mutant_list.append(line.replace("\n", ""))
-            return mutant_list
-        
         def check_alive(self, class_dir, curr_mutant):
             cp_mutant = "{}{}{}".format(class_dir, os.path.pathsep, self.orig_class_bin_dir)
             mutant = execute_testsuite(cp_mutant, self.test_suite_name, self.output_dir, curr_mutant)
@@ -118,12 +105,9 @@ class MuJava:
         total = 0; killed = 0; err_prot_killed = 0; err_no_prot = 0
         err_no_prot_list = []; no_error_list = []
         curr_subject = self.test_suite_name.replace("_ESTest","")
-        err_prot_mutant_list = load_mutants_list(self.error_prot_list)
-        ignore_mutants_list = load_mutants_list(self.ignore_mutants_list)
-        utils.init_histogram(self.criterion, err_prot_mutant_list)
         curr_subject_dir = os.path.join(self.mutants_dir, curr_subject)
         for curr_mutant in os.listdir(curr_subject_dir):
-            if curr_mutant in ignore_mutants_list:
+            if curr_mutant in self.ignore_mutants_list:
                 continue
             
             curr_mutant_dir = os.path.join(curr_subject_dir, curr_mutant)
@@ -135,40 +119,36 @@ class MuJava:
             if(is_killed):
                 killed += 1
                 utils.count_mutant("[{}] {}".format(self.criterion, curr_mutant))
-                if curr_mutant in err_prot_mutant_list:
+                if curr_mutant in self.error_prot_list:
                     err_prot_killed += 1
                 else:
                     err_no_prot += 1
                     err_no_prot_list.append(curr_mutant + ": " + os.path.join(self.output_dir, curr_mutant))
             else:
-                if curr_mutant in err_prot_mutant_list:
+                if curr_mutant in self.error_prot_list:
                     no_error_list.append(curr_mutant + ": " + os.path.join(self.output_dir, curr_mutant))
                 
             total += 1
         if total == 0:
             print("\tNo generated mutants for {}:{}".format(curr_subject, self.mutants_dir))
             exit(1)
-        err_prot = err_prot_killed / len(err_prot_mutant_list)
+        err_prot = err_prot_killed / len(self.error_prot_list)
         save_report_mujava(total, killed, err_prot_killed, err_prot, err_no_prot)
         save_run_info(total, killed, err_prot_killed, err_no_prot)
         
-def setup_mujava(origin_mutants_dir, subject_name, subdir_mutants, original_code_dir, error_prot_list, ignore_mutants_list):
-    lock = threading.Lock()
+def setup_mujava(origin_mutants_dir, subject_name, subdir_mutants, original_code_dir):
     def mk_and_cp_operator_mutant_dir(src_dir, subject_name, operator_dir_name, packages_dir):
         new_dirs = os.path.join(subdir_mutants, subject_name, operator_dir_name)
         new_dirs_packages = os.path.join(new_dirs, packages_dir)
         src_dir = os.path.join(src_dir, operator_dir_name)
         # si existe el directorio, ya debería contener los .class, entonces no copio los mutantes ni compilo
-        lock.acquire()
         if not os.path.exists(new_dirs):
             shutil.copytree(src_dir, new_dirs_packages)
             utils.compile_workdir(new_dirs, new_dirs, new_dirs, original_code_dir)
-        lock.release()
         
     print("Setting up mujava...")
     packages = subject_name.split(".")[0:-1]
     packages_dir = utils.get_package_dir(packages)
-    # subject_dir = os.path.join(result_dir, subject_dir_name)
     class_mutant_dir = os.path.join(origin_mutants_dir, "class_mutants")
     traditional_mutant_dir = os.path.join(origin_mutants_dir, "traditional_mutants")
     
@@ -185,14 +165,7 @@ def setup_mujava(origin_mutants_dir, subject_name, subdir_mutants, original_code
             if not os.path.isdir(os.path.join(method_dir, operator_dir_name)):
                 continue
             mk_and_cp_operator_mutant_dir(method_dir, subject_name, operator_dir_name, packages_dir)
-    dst = os.path.join(subdir_mutants, subject_name)
-    shutil.copy(error_prot_list, dst)
-    try:
-        shutil.copy(ignore_mutants_list, dst)
-    except:
-        print("ignore mutant list does not exists!")
-        None
-
+    print("Mujava setup ready!")
             
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

@@ -79,16 +79,26 @@ def lock_if_windows():
 def release_if_windows():
     if(platform == "win32"):
         lock.release()
+        
+def load_list_from_file(file):
+    try:
+        with open(file) as f:
+            content = f.readlines()
+    except FileNotFoundError:
+        print("File {} does not exists!".format(file))
+        return []
+    list_item = []
+    for line in content:
+        list_item.append(line.replace("\n", ""))
+    return list_item
 
 mutants_histogram = {}
 def init_histogram(criterion, error_list):
-    lock.acquire()
     global mutants_histogram
     for mut in error_list:
         key = "[{}] {}".format(criterion, mut)
         if not key in mutants_histogram:
             mutants_histogram.update({key: 0})
-    lock.release()
 
 def count_mutant(mutant_name_key):
     lock.acquire()
