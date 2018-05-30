@@ -158,6 +158,6 @@ if __name__ == '__main__':
             print("=====================================>{} PROGRESS {}% ({}/{}) Elapsed time: {}:{}:{}<=====================================".format(time.strftime("%H:%M:%S"), percent_finished, finished_subjects, total_subjects, total_time[0], total_time[1], total_time[2]))
     
     merge_all_resumes(all_resumes, 'all_resumes.csv')
-    print_elapsed_time()
     utils.save_file("histogram.txt", utils.get_mutant_histogram())
     print("Done! {}".format(time.strftime("%H:%M:%S")))
+    print_elapsed_time()
