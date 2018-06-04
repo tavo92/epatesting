@@ -104,10 +104,12 @@ def init_histogram(criterion, error_list, ignore_list):
 
 def count_mutant(mutant_name_key):
     lock.acquire()
-    global mutants_histogram
-    value = mutants_histogram[mutant_name_key] + 1
-    mutants_histogram.update({mutant_name_key:value})
-    lock.release()
+    try:
+        global mutants_histogram
+        value = mutants_histogram[mutant_name_key] + 1
+        mutants_histogram.update({mutant_name_key:value})
+    finally:
+        lock.release()
 
 def get_mutant_histogram():
     global mutants_histogram
