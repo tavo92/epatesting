@@ -108,6 +108,14 @@ def count_mutant(mutant_name_key):
         global mutants_histogram
         value = mutants_histogram[mutant_name_key] + 1
         mutants_histogram.update({mutant_name_key:value})
+    except:
+        newkey = "NOERRPROT"+mutant_name_key
+        if not newkey in mutants_histogram:
+            mutants_histogram.update({newkey: 0})
+        else:
+            value = mutants_histogram[newkey] + 1
+            mutants_histogram.update({newkey:value})
+        print("ERROR! The mutant {} has been killed, but not included in err_prot_list")
     finally:
         lock.release()
 
