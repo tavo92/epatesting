@@ -1,26 +1,25 @@
 import csv
 
-header_names = ['ID', 'BUD', 'SUBJ', 'TOOL', 'LINE', 'BRNCH', 'EPA', 'EPAERR', 'EPA_EPAERR', 'ERR', 'NERR', 'TERR', 'MUT', 'TIME', 'LOC', 'PIMUT', 'ERRF', 'MJMUT', 'ERRPROTKILLED', 'ERRPROT', 'ERRNOPROT']
+header_names = ['ID', 'BUD', 'SUBJ', 'TOOL', 'LINE', 'BRNCH', 'EPA', 'EXCEP', 'ERR', 'NERR', 'TERR', 'MUT', 'TIME', 'LOC', 'PIMUT', 'ERRF', 'MJMUT', 'ERRPROTKILLED', 'ERRPROT', 'ERRNOPROT']
 
 def write_row(writer, row):
-    writer.writerow({'ID': row[0], 'BUD': row[1], 'SUBJ': row[2], 'TOOL': row[3], 'LINE': row[4], 'BRNCH': row[5], 'EPA': row[6], 'EPAERR': row[7], 'EPA_EPAERR': row[8], 'ERR': row[9],
-                     'NERR': row[10], 'TERR': row[11], 'MUT': row[12], 'TIME': row[13], 'LOC': row[14], 'PIMUT': row[15], 'ERRF': row[16], 'MJMUT': row[17], 'ERRPROTKILLED': row[18], 'ERRPROT': row[19], 'ERRNOPROT': row[20]});
+    writer.writerow({'ID': row[0], 'BUD': row[1], 'SUBJ': row[2], 'TOOL': row[3], 'LINE': row[4], 'BRNCH': row[5], 'EPA': row[6], 'EXCEP': row[7], 'ERR': row[8],
+                     'NERR': row[9], 'TERR': row[10], 'MUT': row[11], 'TIME': row[12], 'LOC': row[13], 'PIMUT': row[14], 'ERRF': row[15], 'MJMUT': row[16], 'ERRPROTKILLED': row[17], 'ERRPROT': row[18], 'ERRNOPROT': row[19]});
 
 def get_complete_row(row):
-    return [row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], 'N/A', 'N/A', 'N/A', 'N/A', 'N/A', 'N/A', row[9], 'N/A', row[10], row[11], row[12], row[13]]
+    return [row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], 'N/A', 'N/A', 'N/A', 'N/A', 'N/A', 'N/A', row[8], 'N/A', row[9], row[10], row[11], row[12]]
 
 def read_evosuite_csv(file_path):
-    epatransition = 'N/A'; epaerror = 'N/A'; epatransition_epaerror = 'N/A';
+    epatransition = 'N/A'
+    epaexception = 'N/A'
     with open(file_path, newline='') as csvfile:
         reader = csv.DictReader(csvfile)
         for row in reader:
             if 'EPATRANSITION' == row['criterion']:
                 epatransition = row['Coverage']
-            if 'EPAERROR' == row['criterion']:
-                epaerror = row['Coverage']
-            if 'EPATRANSITION;EPAERROR' == row['criterion']:
-                epatransition_epaerror = row['Coverage']
-    return epatransition, epaerror, epatransition_epaerror
+            if 'EPAEXCEPTION' == row['criterion']:
+                epaexception = row['Coverage']
+    return epatransition, epaexception
 
 
 def read_jacoco_csv(target_class, file_path):
@@ -71,11 +70,11 @@ def read_mujava_coverage_csv(mujava_csv):
 
 
 def report_resume_row(target_class, evosuite, jacoco, pit, runid, search_budget, criterion, mujava_csv):
-    epa_coverage, epa_error, epa_coverage_error = read_evosuite_csv(evosuite)
+    epa_coverage, epa_exception = read_evosuite_csv(evosuite)
     branch_coverage, line_coverage = read_jacoco_csv(target_class, jacoco)
     mutation_coverage = read_pit_csv(pit)
     mujava_coverage, err_prot_killed, err_prot, err_no_prot_killed = read_mujava_coverage_csv(mujava_csv)
-    row = [runid, search_budget, target_class, criterion, line_coverage, branch_coverage, epa_coverage, epa_error, epa_coverage_error, mutation_coverage, mujava_coverage, err_prot_killed, err_prot, err_no_prot_killed]
+    row = [runid, search_budget, target_class, criterion, line_coverage, branch_coverage, epa_coverage, epa_exception, mutation_coverage, mujava_coverage, err_prot_killed, err_prot, err_no_prot_killed]
     return row
 
 
