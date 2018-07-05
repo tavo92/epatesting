@@ -1,25 +1,35 @@
 import csv
 
-header_names = ['ID', 'BUD', 'SUBJ', 'TOOL', 'LINE', 'BRNCH', 'EPA', 'EXCEP', 'ERR', 'NERR', 'TERR', 'MUT', 'TIME', 'LOC', 'PIMUT', 'ERRF', 'MJMUT', 'ERRPROTKILLED', 'ERRPROT', 'ERRNOPROT']
+header_names = ['ID', 'BUD', 'SUBJ', 'TOOL', 'LINE', 'BRNCH', 'EPA', 'EXCEP', 'EXCEPTOT', 'ADJAC', 'ADJACTOT', 'ERR', 'NERR', 'TERR', 'MUT', 'TIME', 'LOC', 'PIMUT', 'ERRF', 'MJMUT', 'ERRPROTKILLED', 'ERRPROT', 'ERRNOPROT']
 
 def write_row(writer, row):
-    writer.writerow({'ID': row[0], 'BUD': row[1], 'SUBJ': row[2], 'TOOL': row[3], 'LINE': row[4], 'BRNCH': row[5], 'EPA': row[6], 'EXCEP': row[7], 'ERR': row[8],
-                     'NERR': row[9], 'TERR': row[10], 'MUT': row[11], 'TIME': row[12], 'LOC': row[13], 'PIMUT': row[14], 'ERRF': row[15], 'MJMUT': row[16], 'ERRPROTKILLED': row[17], 'ERRPROT': row[18], 'ERRNOPROT': row[19]});
+    writer.writerow({'ID': row[0], 'BUD': row[1], 'SUBJ': row[2], 'TOOL': row[3], 'LINE': row[4], 'BRNCH': row[5], 'EPA': row[6], 'EXCEP': row[7], 'EXCEPTOT': row[8],
+                     'ADJAC': row[9], 'ADJACTOT': row[10], 'ERR': row[11], 'NERR': row[12], 'TERR': row[13], 'MUT': row[14], 'TIME': row[15], 'LOC': row[16],
+                     'PIMUT': row[17], 'ERRF': row[18], 'MJMUT': row[19], 'ERRPROTKILLED': row[20], 'ERRPROT': row[21], 'ERRNOPROT': row[22]});
 
 def get_complete_row(row):
-    return [row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], 'N/A', 'N/A', 'N/A', 'N/A', 'N/A', 'N/A', row[8], 'N/A', row[9], row[10], row[11], row[12]]
+    return [row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9], row[10], 'N/A', 'N/A', 'N/A', 'N/A', 'N/A', 'N/A', row[11],
+            'N/A', row[12], row[13], row[14], row[15]]
 
 def read_evosuite_csv(file_path):
     epatransition = 'N/A'
     epaexception = 'N/A'
+    epaexception_tot = 'N/A'
+    epaadjacentedges_tot = 'N/A'
+    
+    epaadjacentedges = 'N/A'
     with open(file_path, newline='') as csvfile:
         reader = csv.DictReader(csvfile)
         for row in reader:
             if 'EPATRANSITION' == row['criterion']:
                 epatransition = row['Coverage']
             if 'EPAEXCEPTION' == row['criterion']:
-                epaexception = row['Coverage']
-    return epatransition, epaexception
+                epaexception = row['Covered_Goals']
+                epaexception_tot = row['Total_Goals']
+            if 'EPAADJACENTEDGES' == row['criterion']:
+                epaadjacentedges = row['Covered_Goals']
+                epaadjacentedges_tot = row['Total_Goals']
+    return epatransition, epaexception, epaexception_tot, epaadjacentedges, epaadjacentedges_tot
 
 
 def read_jacoco_csv(target_class, file_path):
@@ -70,11 +80,11 @@ def read_mujava_coverage_csv(mujava_csv):
 
 
 def report_resume_row(target_class, evosuite, jacoco, pit, runid, search_budget, criterion, mujava_csv):
-    epa_coverage, epa_exception = read_evosuite_csv(evosuite)
+    epa_coverage, epa_exception, epa_exception_tot, epaadjacentedges, epaadjacentedges_tot = read_evosuite_csv(evosuite)
     branch_coverage, line_coverage = read_jacoco_csv(target_class, jacoco)
     mutation_coverage = read_pit_csv(pit)
     mujava_coverage, err_prot_killed, err_prot, err_no_prot_killed = read_mujava_coverage_csv(mujava_csv)
-    row = [runid, search_budget, target_class, criterion, line_coverage, branch_coverage, epa_coverage, epa_exception, mutation_coverage, mujava_coverage, err_prot_killed, err_prot, err_no_prot_killed]
+    row = [runid, search_budget, target_class, criterion, line_coverage, branch_coverage, epa_coverage, epa_exception, epa_exception_tot, epaadjacentedges, epaadjacentedges_tot, mutation_coverage, mujava_coverage, err_prot_killed, err_prot, err_no_prot_killed]
     return row
 
 
