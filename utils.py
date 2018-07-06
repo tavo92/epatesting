@@ -85,7 +85,7 @@ def load_list_from_file(file):
         with open(file) as f:
             content = f.readlines()
     except FileNotFoundError:
-        print("File {} does not exists!".format(file))
+        print("File '{}' does not exists!".format(file))
         return []
     list_item = []
     for line in content:
@@ -111,11 +111,11 @@ def count_mutant(mutant_name_key):
     except:
         newkey = "NOERRPROT"+mutant_name_key
         if not newkey in mutants_histogram:
-            mutants_histogram.update({newkey: 0})
+            mutants_histogram.update({newkey: 1})
         else:
             value = mutants_histogram[newkey] + 1
             mutants_histogram.update({newkey:value})
-        print("ERROR! The mutant {} has been killed, but not included in err_prot_list".format(mutant_name_key))
+        print("WARN! The mutant {} has been killed, but not included in err_prot_list".format(mutant_name_key))
     finally:
         lock.release()
 
