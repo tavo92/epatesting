@@ -167,6 +167,7 @@ class RunTestEPA(threading.Thread):
 
         self.subdir_testgen = os.path.join(results_dir_name, "testgen", name, search_budget, criterion.replace(':', '_').lower(), "{}".format(runid))
         self.subdir_metrics = os.path.join(results_dir_name, "metrics", name, search_budget, criterion.replace(':', '_').lower(), "{}".format(runid))
+        self.generated_test_report_evosuite_dir = os.path.join(self.subdir_testgen, 'report_evosuite_generated_test')
         self.subdir_mutants = subdir_mutants
 
         self.name = name
@@ -206,8 +207,7 @@ class RunTestEPA(threading.Thread):
             bin_code_dir = self.bin_instrumented_code_dir if "epa" in self.criterion else self.bin_original_code_dir
             
             # Run Evosuite
-            generated_test_report_evosuite_dir = os.path.join(self.subdir_testgen, 'report_evosuite_generated_test')
-            run_evosuite(evosuite_jar_path=self.evosuite_jar_path, projectCP=bin_code_dir, class_name=self.class_name, criterion=self.criterion, epa_path=self.epa_path, test_dir=self.generated_test_dir, search_budget=self.search_budget, report_dir=generated_test_report_evosuite_dir)
+            run_evosuite(evosuite_jar_path=self.evosuite_jar_path, projectCP=bin_code_dir, class_name=self.class_name, criterion=self.criterion, epa_path=self.epa_path, test_dir=self.generated_test_dir, search_budget=self.search_budget, report_dir=self.generated_test_report_evosuite_dir)
             workaround_test(self.generated_test_dir, self.class_name, self.class_name.split(".")[-1]+"_ESTest.java")
 
             utils.compile_workdir(self.generated_test_dir, self.generated_test_dir, code_dir, self.junit_jar, self.evosuite_classes, self.evosuite_runtime_jar_path)
@@ -238,16 +238,19 @@ class RunTestEPA(threading.Thread):
             
             statistics_csv = os.path.join(self.generated_report_evosuite_dir, "statistics.csv")
             copy_csv(statistics_csv, 'epacoverage_{}'.format(self.name), all_report_dir)
+            statistics_generations_csv = os.path.join(self.generated_test_report_evosuite_dir, "statistics.csv")
+            copy_csv(statistics_generations_csv, 'generations_test_{}'.format(self.name), all_report_dir)
             
             mujava_csv = os.path.join(self.generated_report_mujava, "mujava_report.csv")
             copy_csv(mujava_csv, 'mujava_{}'.format(self.name), all_report_dir)
             
             epacoverage_csv = os.path.join(all_report_dir, "epacoverage_{}.csv".format(self.name))
+            generatios_csv = os.path.join(all_report_dir, "generations_test_{}.csv".format(self.name))
             jacoco_csv = os.path.join(all_report_dir, "{}_jacoco.csv".format(self.name))
             mutations_csv = os.path.join(all_report_dir, "{}_mutations.csv".format(self.name))
             resume_csv = os.path.join(self.subdir_metrics, 'resume.csv')
             criterion = get_alternative_criterion_names(self.criterion)
-            make_report_resume(self.class_name, epacoverage_csv, jacoco_csv, mutations_csv, resume_csv, self.runid, self.search_budget, criterion, mujava_csv)
+            make_report_resume(self.class_name, epacoverage_csv, generatios_csv, jacoco_csv, mutations_csv, resume_csv, self.runid, self.search_budget, criterion, mujava_csv)
             
 def get_alternative_criterion_names(criterion):
     if (criterion == "line:branch"):
