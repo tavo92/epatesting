@@ -15,9 +15,9 @@ def read_evosuite_csv(file_path):
     epatransition = 'N/A'
     epaexception = 'N/A'
     epaexception_tot = 'N/A'
+    epaadjacentedges = 'N/A'
     epaadjacentedges_tot = 'N/A'
     
-    epaadjacentedges = 'N/A'
     with open(file_path, newline='') as csvfile:
         reader = csv.DictReader(csvfile)
         for row in reader:
