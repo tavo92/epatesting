@@ -88,16 +88,17 @@ class EPAConfig:
         for line in lines:
             terms = line.split('*')
             subject_name = terms[0][1:-1]
-            search_budget = terms[1][1:-1]
-            criterion = terms[2][1:-1]
-            method = int(terms[3])
-            rep = int(terms[4])
+            stopping_condition = terms[1][1:-1]
+            search_budget = terms[2][1:-1]
+            criterion = terms[3][1:-1]
+            method = int(terms[4])
+            rep = int(terms[5])
             
             subject = self.subjects[subject_name]
             utils.init_histogram(criterion, subject.error_prot_list, subject.ignore_mutants_list)
             runid = 0
             for __ in range(rep):
-                tests_to_run.append(RunTestEPA(name=subject.name, junit_jar=self.junit_jar, instrumented_code_dir=subject.instrumented_code_dir, original_code_dir=subject.original_code_dir, evosuite_classes=self.evosuite_classes, evosuite_jar_path=self.evosuite_jar_path, evosuite_runtime_jar_path=self.evosuite_runtime_jar_path, class_name=subject.class_name, epa_path=subject.epa_path, criterion=criterion, search_budget=search_budget, runid=runid, method=method, results_dir_name=self.results_dir_name, subdir_mutants=subject.subdir_mutants, error_prot_list=subject.error_prot_list, ignore_mutants_list=subject.ignore_mutants_list, hamcrest_jar_path=self.hamcrest_jar_path))
+                tests_to_run.append(RunTestEPA(name=subject.name, junit_jar=self.junit_jar, instrumented_code_dir=subject.instrumented_code_dir, original_code_dir=subject.original_code_dir, evosuite_classes=self.evosuite_classes, evosuite_jar_path=self.evosuite_jar_path, evosuite_runtime_jar_path=self.evosuite_runtime_jar_path, class_name=subject.class_name, epa_path=subject.epa_path, criterion=criterion, stopping_condition=stopping_condition, search_budget=search_budget, runid=runid, method=method, results_dir_name=self.results_dir_name, subdir_mutants=subject.subdir_mutants, error_prot_list=subject.error_prot_list, ignore_mutants_list=subject.ignore_mutants_list, hamcrest_jar_path=self.hamcrest_jar_path))
                 runid += 1
 
         return [tests_to_run[x:x + self.workers] for x in range(0, len(tests_to_run), self.workers)]
