@@ -85,7 +85,7 @@ def read_mujava_coverage_csv(mujava_csv):
             err_prot_total = row[3]
             err_prot = row[4]
             err_no_prot_total = row[5]
-    return coverage, err_prot_total, err_prot, err_no_prot_total
+    return coverage, err_prot_total, err_prot, err_no_prot_total.strip()
 
 
 def report_resume_row(target_class, evosuite, generatios, jacoco, pit, runid, search_budget, criterion, mujava_csv):
