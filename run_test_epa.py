@@ -210,7 +210,7 @@ class RunTestEPA(threading.Thread):
             run_evosuite(evosuite_jar_path=self.evosuite_jar_path, projectCP=bin_code_dir, class_name=self.class_name, criterion=self.criterion, epa_path=self.epa_path, test_dir=self.generated_test_dir, search_budget=self.search_budget, report_dir=self.generated_test_report_evosuite_dir)
             workaround_test(self.generated_test_dir, self.class_name, self.class_name.split(".")[-1]+"_ESTest.java")
 
-            utils.compile_workdir(self.generated_test_dir, self.generated_test_dir, code_dir, self.junit_jar, self.evosuite_classes, self.evosuite_runtime_jar_path)
+            utils.compile_test_workdir(self.generated_test_dir, code_dir, self.junit_jar, self.evosuite_classes, self.evosuite_runtime_jar_path)
 
         if self.method in [EpatestingMethod.METRICS.value, EpatestingMethod.BOTH.value]:
             print('GENERATING METRICS')

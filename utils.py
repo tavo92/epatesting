@@ -37,6 +37,9 @@ def save_file(path, content):
     file.write(content)
     file.close()
 
+def compile_test_workdir(workdir, *classpath):
+    compile_workdir(workdir, None, *classpath)
+
 def compile_workdir(workdir, output_directory, *classpath):
     command_find = find_and_save_command("*.java", "sources.txt")
     print_command(command_find, workdir)
@@ -46,14 +49,16 @@ def compile_workdir(workdir, output_directory, *classpath):
     release_if_windows()
 
     print_command("mkdir {}".format(output_directory))
-    if not os.path.exists(output_directory):
+    if (output_directory != None and not os.path.exists(output_directory)):
         os.makedirs(output_directory)
         
     all_classpath = ""
     for p in classpath:
         all_classpath += p + os.path.pathsep
 
-    command_compile = "javac -classpath {} -d {} @sources.txt".format(all_classpath, output_directory)
+    output_dir = "" if (output_directory == None) else "-d {}".format(output_directory)
+
+    command_compile = "javac -classpath {} {} @sources.txt".format(all_classpath, output_dir)
     print_command(command_compile, workdir)
     lock_if_windows()
     subprocess.check_output(command_compile, cwd=workdir, shell=True)
