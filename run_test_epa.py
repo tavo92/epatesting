@@ -16,7 +16,7 @@ class EpatestingMethod(Enum):
 
 
 def run_evosuite(evosuite_jar_path, projectCP, class_name, criterion, epa_path, stopping_condition, search_budget, test_dir='test', report_dir='report'):
-    command = 'java -jar {}evosuite-master-1.0.4-SNAPSHOT.jar -projectCP {} -class {} -criterion {} -Dstopping_condition={} -Dsearch_budget={} -Djunit_allow_restricted_libraries=true -Dp_functional_mocking=\"0.0\" -Dp_reflection_on_private=\"0.0\" -Duse_separate_classloader=\"false\" -Dwrite_covered_goals_file=\"true\" -Dwrite_all_goals_file=\"true\" -Dprint_missed_goals=\"true\" -Dtest_dir={} -Dreport_dir={} -Depa_xml_path={} -Dno_runtime_dependency=\"true\" -Dassertions=\"true\" -Dshow_progress=\"false\" -Doutput_variables=\"TARGET_CLASS,criterion,Coverage,Total_Goals,Covered_Goals,Generations\" > {}gen_out.txt 2> {}gen_err.txt'.format(evosuite_jar_path, projectCP, class_name, criterion, stopping_condition, search_budget, test_dir, report_dir, epa_path, test_dir, test_dir)
+    command = 'java -jar {}evosuite-master-1.0.4-SNAPSHOT.jar -projectCP {} -class {} -criterion {} -Dstopping_condition={} -Dsearch_budget={} -Djunit_allow_restricted_libraries=true -Dp_functional_mocking=\"0.0\" -Dp_reflection_on_private=\"0.0\" -Duse_separate_classloader=\"false\" -Dwrite_covered_goals_file=\"true\" -Dwrite_all_goals_file=\"true\" -Dprint_missed_goals=\"true\" -Dtest_dir={} -Dreport_dir={} -Depa_xml_path={} -Dno_runtime_dependency=\"true\" -Dassertions=\"true\" -Dshow_progress=\"false\" -Doutput_variables=\"TARGET_CLASS,criterion,Coverage,Total_Goals,Covered_Goals,Generations,Total_Time\" > {}gen_out.txt 2> {}gen_err.txt'.format(evosuite_jar_path, projectCP, class_name, criterion, stopping_condition, search_budget, test_dir, report_dir, epa_path, test_dir, test_dir)
     utils.print_command(command)
     subprocess.check_output(command, shell=True)
 
@@ -239,19 +239,19 @@ class RunTestEPA(threading.Thread):
             
             statistics_csv = os.path.join(self.generated_report_evosuite_dir, "statistics.csv")
             copy_csv(statistics_csv, 'epacoverage_{}'.format(self.name), all_report_dir)
-            statistics_generations_csv = os.path.join(self.generated_test_report_evosuite_dir, "statistics.csv")
-            copy_csv(statistics_generations_csv, 'generations_test_{}'.format(self.name), all_report_dir)
+            statistics_testgen_csv = os.path.join(self.generated_test_report_evosuite_dir, "statistics.csv")
+            copy_csv(statistics_testgen_csv, 'statistics_testgen_{}'.format(self.name), all_report_dir)
             
             mujava_csv = os.path.join(self.generated_report_mujava, "mujava_report.csv")
             copy_csv(mujava_csv, 'mujava_{}'.format(self.name), all_report_dir)
             
             epacoverage_csv = os.path.join(all_report_dir, "epacoverage_{}.csv".format(self.name))
-            generatios_csv = os.path.join(all_report_dir, "generations_test_{}.csv".format(self.name))
+            statistics_testgen_csv = os.path.join(all_report_dir, "statistics_testgen_{}.csv".format(self.name))
             jacoco_csv = os.path.join(all_report_dir, "{}_jacoco.csv".format(self.name))
             mutations_csv = os.path.join(all_report_dir, "{}_mutations.csv".format(self.name))
             resume_csv = os.path.join(self.subdir_metrics, 'resume.csv')
             criterion = get_alternative_criterion_names(self.criterion)
-            make_report_resume(self.class_name, epacoverage_csv, generatios_csv, jacoco_csv, mutations_csv, resume_csv, self.runid, self.stopping_condition, self.search_budget, criterion, mujava_csv)
+            make_report_resume(self.class_name, epacoverage_csv, statistics_testgen_csv, jacoco_csv, mutations_csv, resume_csv, self.runid, self.stopping_condition, self.search_budget, criterion, mujava_csv)
             
 def get_alternative_criterion_names(criterion):
     if (criterion == "line:branch"):
