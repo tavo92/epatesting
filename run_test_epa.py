@@ -13,6 +13,10 @@ class EpatestingMethod(Enum):
     TESTGEN = 1
     METRICS = 2
     BOTH = 3
+    
+class BugType(Enum):
+    ALL = 1
+    ERRPROT = 2
 
 
 def run_evosuite(evosuite_jar_path, projectCP, class_name, criterion, epa_path, stopping_condition, search_budget, test_dir='test', report_dir='report'):
@@ -131,8 +135,8 @@ def pitest_measure(pitest_dir, targetClasses, targetTests, class_dir, test_dir):
 
     run_pitest(os.path.join(pitest_dir, ""))
     
-def mujava_measure(criterion, subdir_mutants, error_prot_list, ignore_mutants_list, bin_original_code_dir, generated_test_dir, class_name, junit_jar, hamcrest_jar, generated_report_mujava):
-    mujava = mujava_coverage.MuJava(criterion, subdir_mutants, error_prot_list, ignore_mutants_list, bin_original_code_dir, generated_test_dir, class_name, junit_jar, hamcrest_jar, generated_report_mujava)
+def mujava_measure(bug_type, criterion, subdir_mutants, error_prot_list, ignore_mutants_list, bin_original_code_dir, generated_test_dir, class_name, junit_jar, hamcrest_jar, generated_report_mujava):
+    mujava = mujava_coverage.MuJava(bug_type, criterion, subdir_mutants, error_prot_list, ignore_mutants_list, bin_original_code_dir, generated_test_dir, class_name, junit_jar, hamcrest_jar, generated_report_mujava)
     mujava.compute_mutation_score()
 
 
@@ -162,11 +166,11 @@ def copy_pitest_csv(name, workdir, all_report_dir):
 
 class RunTestEPA(threading.Thread):
 
-    def __init__(self, name, junit_jar, instrumented_code_dir, original_code_dir, evosuite_classes, evosuite_jar_path, evosuite_runtime_jar_path, class_name, epa_path, criterion, stopping_condition, search_budget, runid, method, results_dir_name, subdir_mutants, error_prot_list, ignore_mutants_list, hamcrest_jar_path):
+    def __init__(self, name, junit_jar, instrumented_code_dir, original_code_dir, evosuite_classes, evosuite_jar_path, evosuite_runtime_jar_path, class_name, epa_path, criterion, bug_type, stopping_condition, search_budget, runid, method, results_dir_name, subdir_mutants, error_prot_list, ignore_mutants_list, hamcrest_jar_path):
         threading.Thread.__init__(self)
 
-        self.subdir_testgen = os.path.join(results_dir_name, "testgen", name, stopping_condition, search_budget, criterion.replace(':', '_').lower(), "{}".format(runid))
-        self.subdir_metrics = os.path.join(results_dir_name, "metrics", name, stopping_condition, search_budget, criterion.replace(':', '_').lower(), "{}".format(runid))
+        self.subdir_testgen = os.path.join(results_dir_name, "testgen", name, bug_type, stopping_condition, search_budget, criterion.replace(':', '_').lower(), "{}".format(runid))
+        self.subdir_metrics = os.path.join(results_dir_name, "metrics", name, bug_type, stopping_condition, search_budget, criterion.replace(':', '_').lower(), "{}".format(runid))
         self.generated_test_report_evosuite_dir = os.path.join(self.subdir_testgen, 'report_evosuite_generated_test')
         self.subdir_mutants = subdir_mutants
 
@@ -180,6 +184,7 @@ class RunTestEPA(threading.Thread):
         self.class_name = class_name
         self.epa_path = epa_path
         self.criterion = criterion
+        self.bug_type = bug_type
         self.generated_test_dir = os.path.join(self.subdir_testgen, 'test')
         self.generated_report_evosuite_dir = os.path.join(self.subdir_metrics, 'report_evosuite')
         self.generated_report_pitest_dir = os.path.join(self.subdir_metrics, 'report_pitest')
@@ -207,9 +212,10 @@ class RunTestEPA(threading.Thread):
             code_dir = self.instrumented_code_dir if "epa" in self.criterion else self.original_code_dir
             bin_code_dir = self.bin_instrumented_code_dir if "epa" in self.criterion else self.bin_original_code_dir
             
-            # Run Evosuite
             run_evosuite(evosuite_jar_path=self.evosuite_jar_path, projectCP=bin_code_dir, class_name=self.class_name, criterion=self.criterion, epa_path=self.epa_path, test_dir=self.generated_test_dir, stopping_condition=self.stopping_condition, search_budget=self.search_budget, report_dir=self.generated_test_report_evosuite_dir)
-            workaround_test(self.generated_test_dir, self.class_name, self.class_name.split(".")[-1]+"_ESTest.java")
+            
+            if(self.bug_type.upper() == BugType.ERRPROT.name):
+                workaround_test(self.generated_test_dir, self.class_name, self.class_name.split(".")[-1]+"_ESTest.java")
 
             utils.compile_test_workdir(self.generated_test_dir, code_dir, self.junit_jar, self.evosuite_classes, self.evosuite_runtime_jar_path)
 
@@ -226,7 +232,7 @@ class RunTestEPA(threading.Thread):
             # Run Pitest to measure
             pitest_measure(self.generated_report_pitest_dir, self.class_name, "{}_ESTest".format(self.class_name), self.original_code_dir, self.generated_test_dir)
             
-            mujava_measure(self.criterion, self.subdir_mutants, self.error_prot_list, self.ignore_mutants_list, self.bin_original_code_dir, self.generated_test_dir, self.class_name, self.junit_jar, self.hamcrest_jar_path, self.generated_report_mujava)
+            mujava_measure(self.bug_type, self.criterion, self.subdir_mutants, self.error_prot_list, self.ignore_mutants_list, self.bin_original_code_dir, self.generated_test_dir, self.class_name, self.junit_jar, self.hamcrest_jar_path, self.generated_report_mujava)
 
             # Resume the reports generated
             all_report_dir = os.path.join(self.subdir_metrics, 'all_reports')
@@ -251,7 +257,7 @@ class RunTestEPA(threading.Thread):
             mutations_csv = os.path.join(all_report_dir, "{}_mutations.csv".format(self.name))
             resume_csv = os.path.join(self.subdir_metrics, 'resume.csv')
             criterion = get_alternative_criterion_names(self.criterion)
-            make_report_resume(self.class_name, epacoverage_csv, statistics_testgen_csv, jacoco_csv, mutations_csv, resume_csv, self.runid, self.stopping_condition, self.search_budget, criterion, mujava_csv)
+            make_report_resume(self.class_name, epacoverage_csv, statistics_testgen_csv, jacoco_csv, mutations_csv, resume_csv, self.runid, self.stopping_condition, self.search_budget, criterion, self.bug_type, mujava_csv)
             
 def get_alternative_criterion_names(criterion):
     if (criterion == "line:branch"):

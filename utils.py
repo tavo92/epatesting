@@ -4,6 +4,7 @@ import re
 import subprocess
 from sys import platform
 import threading
+import run_test_epa
 
 def get_package_dir(package_array):
     packages_dir = ""
@@ -98,35 +99,38 @@ def load_list_from_file(file):
     return list_item
 
 mutants_histogram = {}
-def init_histogram(criterion, error_list, ignore_list):
+def init_histogram(bug_type, criterion, mutants_list, ignore_list):
     global mutants_histogram
-    for mut in error_list:
-        if mut in ignore_list:
+    for mutant in mutants_list:
+        if mutant in ignore_list:
             continue
-        key = "[{}] {}".format(criterion, mut)
+        key = "[{}] [{}] {}".format(bug_type, criterion, mutant)
         if not key in mutants_histogram:
             mutants_histogram.update({key: 0})
 
-def count_mutant(mutant_name_key):
+def count_mutant(bug_type, criterion, mutant):
     lock.acquire()
     try:
         global mutants_histogram
+        mutant_name_key = "[{}] [{}] {}".format(bug_type, criterion, mutant)
         value = mutants_histogram[mutant_name_key] + 1
         mutants_histogram.update({mutant_name_key:value})
     except:
-        newkey = "NOERRPROT"+mutant_name_key
+        is_errprot = bug_type.upper() == run_test_epa.BugType.ERRPROT.name
+        err_prot = "NOERRPROT" if is_errprot else "ERROR"
+        newkey = err_prot + mutant_name_key
         if not newkey in mutants_histogram:
             mutants_histogram.update({newkey: 1})
         else:
             value = mutants_histogram[newkey] + 1
             mutants_histogram.update({newkey:value})
-        print("WARN! The mutant {} has been killed, but not included in err_prot_list".format(mutant_name_key))
+            print("WARN! The mutant {} has been killed, but not included in the mutant list using the bug_type '{}'".format(mutant_name_key, bug_type))
     finally:
         lock.release()
 
 def get_mutant_histogram():
     global mutants_histogram
-    ret = "Error Prot, # Killed"
+    ret = "Mutant, # Killed"
     for criterion_mut in mutants_histogram.keys():
         ret += "\n{}, {}".format(criterion_mut, mutants_histogram[criterion_mut])
     return ret

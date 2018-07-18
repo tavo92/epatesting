@@ -7,7 +7,8 @@ import shutil
 
 class MuJava:
     
-    def __init__(self, criterion, subdir_mutants, error_prot_list, ignore_mutant_list, orig_class_bin_dir, test_suite_bin, test_suite_name, junit_path, hamcrest_path, output_dir):
+    def __init__(self, bug_type, criterion, subdir_mutants, error_prot_list, ignore_mutant_list, orig_class_bin_dir, test_suite_bin, test_suite_name, junit_path, hamcrest_path, output_dir):
+        self.bug_type = bug_type
         self.criterion = criterion
         self.mutants_dir = subdir_mutants
         self.error_prot_list = error_prot_list
@@ -73,15 +74,15 @@ class MuJava:
                         print("ERROR! MUTANT DIR: {} must not be empty! Check it!".format(mutant_dir))
                         exit(1)
                         
-        def save_report_mujava(total, killed, err_prot_killed, err_prot, err_no_prot):
-            save_report = "echo TOTAL,KILLED,MUTATION_COVERAGE,ERRPROTTOT,ERRPROT,ERRNOPROT> {}{}mujava_report.csv".format(self.output_dir, os.path.sep)
+        def save_report_mujava(total, killed, total_errprot, killed_mutants_in_errorprot_list, err_no_prot):
+            save_report = "echo TOTAL,KILLED,MUTATION_COVERAGE,TOT_ERRPROT,KILLED_ERRPROT,ERRPROT_COVERAGE,ERRNOPROT> {}{}mujava_report.csv".format(self.output_dir, os.path.sep)
             subprocess.check_output(save_report, shell=True)
-            save_report = "echo {},{},{},{},{},{} >> {}{}mujava_report.csv".format(total, killed, killed/total, err_prot_killed, err_prot, err_no_prot, self.output_dir, os.path.sep)
+            save_report = "echo {},{},{},{},{},{},{} >> {}{}mujava_report.csv".format(total, killed, killed/total, total_errprot, killed_mutants_in_errorprot_list, killed_mutants_in_errorprot_list/total_errprot, err_no_prot, self.output_dir, os.path.sep)
             subprocess.check_output(save_report, shell=True)
         
-        def save_run_info(total, killed, err_prot_killed, err_no_prot):
+        def save_run_info(total, killed, killed_mutants_in_errorprot_list, err_no_prot):
             utils.save_file(os.path.join(self.output_dir, "running_info.txt"), self.running_cmd)
-            extra_info = "\nTotal: {} - Killed: {} - coverage: {} - error_prot_killed: {} - Err prot: {} - Err NO prot: {}\n".format(total, killed, killed/total, err_prot_killed, err_prot, err_no_prot)
+            extra_info = "\nTotal: {} - Killed: {} - coverage: {} - error_prot_killed: {} - Err NO prot: {}\n".format(total, killed, killed/total, killed_mutants_in_errorprot_list, err_no_prot)
             extra_info += "Errores detectados pero que no son de protocolo {}------------------------\n".format(len(err_no_prot_list))
             i = 0
             for __ in err_no_prot_list:
@@ -96,13 +97,11 @@ class MuJava:
             utils.save_file(os.path.join(self.output_dir, "extra_info.txt"), extra_info)
 
 
-# Prepare mujava mutants structure for future mutation score analysis
-
         print("Running mutation score...")
         utils.remove_and_make_dirs(self.output_dir)
         original = execute_testsuite(self.orig_class_bin_dir, self.test_suite_name, self.output_dir, "original")
         self.running_cmd += "\nORIGINAL <-------------------------------------------------------------------------------------------\n\n"
-        total = 0; killed = 0; err_prot_killed = 0; err_no_prot = 0
+        total = 0; killed = 0; killed_mutants_in_errorprot_list = 0; err_no_prot = 0
         err_no_prot_list = []; no_error_list = []
         curr_subject = self.test_suite_name.replace("_ESTest","")
         curr_subject_dir = os.path.join(self.mutants_dir, curr_subject)
@@ -118,9 +117,9 @@ class MuJava:
             is_killed = not check_alive(self, curr_mutant_dir, curr_mutant)
             if(is_killed):
                 killed += 1
-                utils.count_mutant("[{}] {}".format(self.criterion, curr_mutant))
+                utils.count_mutant(self.bug_type, self.criterion, curr_mutant)
                 if curr_mutant in self.error_prot_list:
-                    err_prot_killed += 1
+                    killed_mutants_in_errorprot_list += 1
                 else:
                     err_no_prot += 1
                     err_no_prot_list.append(curr_mutant + ": " + os.path.join(self.output_dir, curr_mutant))
@@ -132,10 +131,10 @@ class MuJava:
         if total == 0:
             print("\tNo generated mutants for {}:{}".format(curr_subject, self.mutants_dir))
             exit(1)
-        err_prot = err_prot_killed / len(self.error_prot_list)
-        save_report_mujava(total, killed, err_prot_killed, err_prot, err_no_prot)
-        save_run_info(total, killed, err_prot_killed, err_no_prot)
+        save_report_mujava(total, killed, len(self.error_prot_list), killed_mutants_in_errorprot_list, err_no_prot)
+        save_run_info(total, killed, killed_mutants_in_errorprot_list, err_no_prot)
         
+# Prepare mujava mutants structure for future mutation score analysis
 def setup_mujava(origin_mutants_dir, subject_name, subdir_mutants, original_code_dir):
     def mk_and_cp_operator_mutant_dir(src_dir, subject_name, operator_dir_name, packages_dir):
         new_dirs = os.path.join(subdir_mutants, subject_name, operator_dir_name)
