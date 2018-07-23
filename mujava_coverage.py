@@ -77,7 +77,8 @@ class MuJava:
         def save_report_mujava(total, killed, total_errprot, killed_mutants_in_errorprot_list, err_no_prot):
             save_report = "echo TOTAL,KILLED,MUTATION_COVERAGE,TOT_ERRPROT,KILLED_ERRPROT,ERRPROT_COVERAGE,ERRNOPROT> {}{}mujava_report.csv".format(self.output_dir, os.path.sep)
             subprocess.check_output(save_report, shell=True)
-            save_report = "echo {},{},{},{},{},{},{} >> {}{}mujava_report.csv".format(total, killed, killed/total, total_errprot, killed_mutants_in_errorprot_list, killed_mutants_in_errorprot_list/total_errprot, err_no_prot, self.output_dir, os.path.sep)
+            errprot_coverage = "N/A" if total_errprot == 0 else killed_mutants_in_errorprot_list/total_errprot
+            save_report = "echo {},{},{},{},{},{},{} >> {}{}mujava_report.csv".format(total, killed, killed/total, total_errprot, killed_mutants_in_errorprot_list, errprot_coverage, err_no_prot, self.output_dir, os.path.sep)
             subprocess.check_output(save_report, shell=True)
         
         def save_run_info(total, killed, killed_mutants_in_errorprot_list, err_no_prot):
@@ -165,27 +166,3 @@ def setup_mujava(origin_mutants_dir, subject_name, subdir_mutants, original_code
                 continue
             mk_and_cp_operator_mutant_dir(method_dir, subject_name, operator_dir_name, packages_dir)
     print("Mujava setup ready!")
-            
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument("mutants_dir", help="Directorio donde estan los mutantes")
-    #C:\Users\JGodoy\workspace-epa\epatesting\mutants
-    parser.add_argument("mutants_dir", help="Directorio donde estan los mutantes")
-    #C:\Users\JGodoy\Documents\MuJava
-    parser.add_argument("orig_class_bin_name", help="Path al archivo .class original")
-    #workspace-epa/evosuite-subjects/workdir/socket/original
-    parser.add_argument("test_suite_bin", help="Path al archivo .class original del test suite")
-    #C:\Users\JGodoy\workspace-epa\evosuite-subjects\workdir\socket\test
-    parser.add_argument("test_suite_name", help="Nombre del test suite")
-    #TestSocket
-    parser.add_argument("junit_path", help="Path a junit.jar")
-    #C:\Users\JGodoy\Documents\MuJava\junit.jar
-    parser.add_argument("hamcrest_jar", help="Path a hamcrest_jar.jar")
-    #C:\Users\JGodoy\Documents\MuJava\org.hamcrest.core_1.3.0.v201303031735.jar
-    parser.add_argument("output_dir", help="Output dir to save info")
-    args = parser.parse_args()
-    
-    #setup_mujava(args.mutants_dir, args.mutants_dir)
-    mujava = MuJava(args.mutants_dir, args.orig_class_bin_name, args.test_suite_bin, args.test_suite_name, args.junit_path, args.hamcrest_jar, args.mutants_dir)
-    mujava.compute_mutation_score()
-    print("Done!")
