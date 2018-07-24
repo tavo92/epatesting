@@ -2,6 +2,7 @@
 #!/bin/bash
 
 echo "Iniciando Epa Testing..."
+export _JAVA_OPTIONS=-Xmx1024m
 cd /home/jgodoy/workspace-epa/epatesting
 newName=$(date +%Y-%m-%d_%H%M%S)
 newName=epa_output.$newName.txt
