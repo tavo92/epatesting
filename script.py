@@ -114,11 +114,14 @@ class EPAConfig:
         return [tests_to_run[x:x + self.workers] for x in range(0, len(tests_to_run), self.workers)]
     
     def setupmujava(self, test_chunks):
+        subjects = set()
         for chunk in test_chunks:
             for test in chunk:
                 if test.name in self.subjects:
-                    subject = self.subjects[test.name]
-                    mujava_coverage.setup_mujava(subject.mutants_dir, subject.class_name, subject.subdir_mutants, subject.original_code_dir)
+                    subjects.add(self.subjects[test.name])
+        
+        for subject in subjects:
+            mujava_coverage.setup_mujava(subject.mutants_dir, subject.class_name, subject.subdir_mutants, subject.original_code_dir)
 
 
 _start_time = time.time()

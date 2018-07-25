@@ -141,7 +141,7 @@ def setup_mujava(origin_mutants_dir, subject_name, subdir_mutants, original_code
         new_dirs = os.path.join(subdir_mutants, subject_name, operator_dir_name)
         new_dirs_packages = os.path.join(new_dirs, packages_dir)
         src_dir = os.path.join(src_dir, operator_dir_name)
-        # si existe el directorio, ya debería contener los .class, entonces no copio los mutantes ni compilo
+        # si existe el directorio, ya deberia contener los .class, entonces no copio los mutantes ni compilo
         if not os.path.exists(new_dirs):
             shutil.copytree(src_dir, new_dirs_packages)
             utils.compile_workdir(new_dirs, new_dirs, new_dirs, original_code_dir)
