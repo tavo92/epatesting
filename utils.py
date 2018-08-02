@@ -99,20 +99,20 @@ def load_list_from_file(file):
     return list_item
 
 mutants_histogram = {}
-def init_histogram(bug_type, criterion, mutants_list, ignore_list):
+def init_histogram(bug_type, subject, criterion, mutants_list, ignore_list):
     global mutants_histogram
     for mutant in mutants_list:
         if mutant in ignore_list:
             continue
-        key = "[{}] [{}] {}".format(bug_type, criterion, mutant)
+        key = "[{}] [{}] [{}] {}".format(bug_type, subject, criterion, mutant)
         if not key in mutants_histogram:
             mutants_histogram.update({key: 0})
 
-def count_mutant(bug_type, criterion, mutant):
+def count_mutant(bug_type, subject, criterion, mutant):
     lock.acquire()
     try:
         global mutants_histogram
-        mutant_name_key = "[{}] [{}] {}".format(bug_type, criterion, mutant)
+        mutant_name_key = "[{}] [{}] [{}] {}".format(bug_type, subject, criterion, mutant)
         value = mutants_histogram[mutant_name_key] + 1
         mutants_histogram.update({mutant_name_key:value})
     except:

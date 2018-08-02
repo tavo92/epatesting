@@ -135,8 +135,8 @@ def pitest_measure(pitest_dir, targetClasses, targetTests, class_dir, test_dir):
 
     run_pitest(os.path.join(pitest_dir, ""))
     
-def mujava_measure(bug_type, criterion, subdir_mutants, error_prot_list, ignore_mutants_list, bin_original_code_dir, generated_test_dir, class_name, junit_jar, hamcrest_jar, generated_report_mujava):
-    mujava = mujava_coverage.MuJava(bug_type, criterion, subdir_mutants, error_prot_list, ignore_mutants_list, bin_original_code_dir, generated_test_dir, class_name, junit_jar, hamcrest_jar, generated_report_mujava)
+def mujava_measure(bug_type, name, criterion, subdir_mutants, error_prot_list, ignore_mutants_list, bin_original_code_dir, generated_test_dir, class_name, junit_jar, hamcrest_jar, generated_report_mujava):
+    mujava = mujava_coverage.MuJava(bug_type, name, criterion, subdir_mutants, error_prot_list, ignore_mutants_list, bin_original_code_dir, generated_test_dir, class_name, junit_jar, hamcrest_jar, generated_report_mujava)
     mujava.compute_mutation_score()
 
 
@@ -232,7 +232,7 @@ class RunTestEPA(threading.Thread):
             # Run Pitest to measure
             pitest_measure(self.generated_report_pitest_dir, self.class_name, "{}_ESTest".format(self.class_name), self.original_code_dir, self.generated_test_dir)
             
-            mujava_measure(self.bug_type, self.criterion, self.subdir_mutants, self.error_prot_list, self.ignore_mutants_list, self.bin_original_code_dir, self.generated_test_dir, self.class_name, self.junit_jar, self.hamcrest_jar_path, self.generated_report_mujava)
+            mujava_measure(self.bug_type, self.name, self.criterion, self.subdir_mutants, self.error_prot_list, self.ignore_mutants_list, self.bin_original_code_dir, self.generated_test_dir, self.class_name, self.junit_jar, self.hamcrest_jar_path, self.generated_report_mujava)
 
             # Resume the reports generated
             all_report_dir = os.path.join(self.subdir_metrics, 'all_reports')

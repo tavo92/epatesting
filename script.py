@@ -104,7 +104,7 @@ class EPAConfig:
             if(bug_type.upper() == run_test_epa.BugType.ERRPROT.name):
                 mutant_list = subject.error_prot_list
             
-            utils.init_histogram(bug_type, criterion, mutant_list, subject.ignore_mutants_list)
+            utils.init_histogram(bug_type, subject_name, criterion, mutant_list, subject.ignore_mutants_list)
             
             runid = 0
             for __ in range(rep):

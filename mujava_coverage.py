@@ -7,8 +7,9 @@ import shutil
 
 class MuJava:
     
-    def __init__(self, bug_type, criterion, subdir_mutants, error_prot_list, ignore_mutant_list, orig_class_bin_dir, test_suite_bin, test_suite_name, junit_path, hamcrest_path, output_dir):
+    def __init__(self, bug_type, name, criterion, subdir_mutants, error_prot_list, ignore_mutant_list, orig_class_bin_dir, test_suite_bin, test_suite_name, junit_path, hamcrest_path, output_dir):
         self.bug_type = bug_type
+        self.subject_name = name
         self.criterion = criterion
         self.mutants_dir = subdir_mutants
         self.error_prot_list = error_prot_list
@@ -118,7 +119,7 @@ class MuJava:
             is_killed = not check_alive(self, curr_mutant_dir, curr_mutant)
             if(is_killed):
                 killed += 1
-                utils.count_mutant(self.bug_type, self.criterion, curr_mutant)
+                utils.count_mutant(self.bug_type, self.subject_name, self.criterion, curr_mutant)
                 if curr_mutant in self.error_prot_list:
                     killed_mutants_in_errorprot_list += 1
                 else:
