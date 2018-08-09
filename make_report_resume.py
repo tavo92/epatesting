@@ -1,22 +1,49 @@
 import csv
 
-header_names = ['ID', 'BUD', 'SUBJ', 'TOOL', 'LINE', 'BRNCH', 'EPA', 'ERR', 'NERR', 'TERR', 'MUT', 'TIME', 'LOC', 'PIMUT', 'ERRF', 'MJMUT', 'ERRPROTKILLED', 'ERRPROT', 'ERRNOPROT']
+header_names = ['ID', 'BUG_TYPE', 'STOP_COND', 'BUD', 'SUBJ', 'TOOL', 'LINE', 'BRNCH', 'EPA', 'EXCEP', 'EXCEPTOT', 'ADJAC', 'ADJACTOT', 'ERR',
+                'NERR', 'TERR', 'MUT', 'TIME', 'LOC', 'PIMUT', 'ERRF', 'MJMUT', 'MUT_KILLED', 'ERRPROT_KILLED', 'GENS', 'TOT_TIME']
 
 def write_row(writer, row):
-    writer.writerow({'ID': row[0], 'BUD': row[1], 'SUBJ': row[2], 'TOOL': row[3], 'LINE': row[4], 'BRNCH': row[5], 'EPA': row[6], 'ERR': row[7],
-                     'NERR': row[8], 'TERR': row[9], 'MUT': row[10], 'TIME': row[11], 'LOC': row[12], 'PIMUT': row[13], 'ERRF': row[14], 'MJMUT': row[15], 'ERRPROTKILLED': row[16], 'ERRPROT': row[17], 'ERRNOPROT': row[18]});
-                     
+    writer.writerow({'ID': row[0], 'BUG_TYPE': row[1], 'STOP_COND': row[2], 'BUD': row[3], 'SUBJ': row[4], 'TOOL': row[5], 'LINE': row[6],
+                     'BRNCH': row[7], 'EPA': row[8], 'EXCEP': row[9], 'EXCEPTOT': row[10], 'ADJAC': row[11], 'ADJACTOT': row[12],
+                     'ERR': row[13], 'NERR': row[14], 'TERR': row[15], 'MUT': row[16], 'TIME': row[17], 'LOC': row[18], 'PIMUT': row[19],
+                     'ERRF': row[20], 'MJMUT': row[21], 'MUT_KILLED': row[22], 'ERRPROT_KILLED': row[23], 'GENS': row[24],
+                     'TOT_TIME': row[25]});
+
 def get_complete_row(row):
-    return [row[0], row[1], row[2], row[3], row[4], row[5], row[6], 'N/A', 'N/A', 'N/A', 'N/A', 'N/A', 'N/A', row[7], 'N/A', row[8], row[9], row[10], row[11]]
+    return [row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9], row[10], row[11], row[12], 'N/A', 'N/A', 'N/A', 'N/A', 'N/A', 'N/A', row[13],
+            'N/A', row[14], row[15], row[16], row[17], row[18]]
 
 def read_evosuite_csv(file_path):
+    epatransition = 'N/A'
+    epaexception = 'N/A'
+    epaexception_tot = 'N/A'
+    epaadjacentedges = 'N/A'
+    epaadjacentedges_tot = 'N/A'
+    
     with open(file_path, newline='') as csvfile:
         reader = csv.DictReader(csvfile)
         for row in reader:
             if 'EPATRANSITION' == row['criterion']:
-                return row['Coverage']
-    print("ERROR!!! EPATRANSITION NOT GENERATED! Dir: {} ".format(file_path))
-    return 'N/A'
+                epatransition = row['Coverage']
+            if 'EPAEXCEPTION' == row['criterion']:
+                epaexception = row['Covered_Goals']
+                epaexception_tot = row['Total_Goals']
+            if 'EPAADJACENTEDGES' == row['criterion']:
+                epaadjacentedges = row['Covered_Goals']
+                epaadjacentedges_tot = row['Total_Goals']
+    return epatransition, epaexception, epaexception_tot, epaadjacentedges, epaadjacentedges_tot
+
+def read_generations_csv(file_path):
+    generations = 'N/A'
+    total_time = 'N/A'
+    with open(file_path, newline='') as csvfile:
+        reader = csv.DictReader(csvfile)
+        for row in reader:
+            generations = row['Generations']
+            total_time = int(row['Total_Time'])/1000
+
+    return generations, total_time
 
 
 def read_jacoco_csv(target_class, file_path):
@@ -51,36 +78,37 @@ def read_pit_csv(file_path):
     return killed / total
 
 def read_mujava_coverage_csv(mujava_csv):
-    coverage = 0.0
-    err_prot_total = 0
-    err_prot = 0.0
-    err_no_prot_total = 0
+    mujava_coverage = 0.0
+    mutants_killed = 0
+    err_prot_killed = 0.0
     with open(mujava_csv, newline='') as csvfile:
         reader = csv.reader(csvfile)
         next(reader)
         for row in reader:
-            coverage = row[2]
-            err_prot_total = row[3]
-            err_prot = row[4]
-            err_no_prot_total = row[5]
-    return coverage, err_prot_total, err_prot, err_no_prot_total
+            mutants_killed = row[1]
+            mujava_coverage = row[2]
+            err_prot_killed = row[4]
+    return mujava_coverage, mutants_killed, err_prot_killed
 
 
-def report_resume_row(target_class, evosuite, jacoco, pit, runid, search_budget, criterion, mujava_csv):
-    epa_coverage = read_evosuite_csv(evosuite)
+def report_resume_row(target_class, evosuite, statistics_testgen, jacoco, pit, runid, bug_type, stopping_condition, search_budget, criterion, mujava_csv):
+    epa_coverage, epa_exception, epa_exception_tot, epaadjacentedges, epaadjacentedges_tot = read_evosuite_csv(evosuite)
+    generations_test, total_time_test = read_generations_csv(statistics_testgen)
     branch_coverage, line_coverage = read_jacoco_csv(target_class, jacoco)
     mutation_coverage = read_pit_csv(pit)
-    mujava_coverage, err_prot_killed, err_prot, err_no_prot_killed = read_mujava_coverage_csv(mujava_csv)
-    row = [runid, search_budget, target_class, criterion, line_coverage, branch_coverage, epa_coverage, mutation_coverage, mujava_coverage, err_prot_killed, err_prot, err_no_prot_killed]
+    mujava_coverage, mutants_killed, err_prot_killed = read_mujava_coverage_csv(mujava_csv)
+    row = [runid, bug_type, stopping_condition, search_budget, target_class, criterion, line_coverage, branch_coverage, epa_coverage, epa_exception,
+           epa_exception_tot, epaadjacentedges, epaadjacentedges_tot, mutation_coverage, mujava_coverage, mutants_killed, err_prot_killed,
+           generations_test, total_time_test]
     return row
 
 
-def make_report_resume(target_class, evosuite, jacoco, pit, output_file, runid, search_budget, criterion, mujava_csv):
+def make_report_resume(target_class, evosuite, statistics_testgen, jacoco, pit, output_file, runid, stopping_condition, search_budget, criterion, bug_type, mujava_csv):
     with open(output_file, 'w', newline='') as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames=header_names)
 
         writer.writeheader()
-        row = report_resume_row(target_class, evosuite, jacoco, pit, runid, search_budget, criterion, mujava_csv)
+        row = report_resume_row(target_class, evosuite, statistics_testgen, jacoco, pit, runid, bug_type, stopping_condition, search_budget, criterion, mujava_csv)
         row = get_complete_row(row)
         write_row(writer, row)
 
