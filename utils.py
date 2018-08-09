@@ -22,15 +22,26 @@ def make_dirs_if_not_exist(path):
     if not os.path.exists(path):
         os.makedirs(path)
     
-def replace_assert_catch_in_tests(java_file):
+def replace_assert_catch_in_test(java_file):
     new_file = ""
     with open(java_file) as file:
         for line in file:
             line = re.sub('\sassert','//assert', line.rstrip())
             line = re.sub('catch\\(\w*','catch(Exception', line.rstrip())
             new_file += line+"\n"
-    
+
     shutil.move(java_file, java_file+".original")
+    save_file(java_file, new_file)
+
+def add_fails_in_test(java_file):
+    new_file = ""
+    with open(java_file) as file:
+        for line in file:
+            if("catch(Exception" in line):
+                line = "{}\n{}".format("\t\tfail();", line)
+            new_file += line
+
+    shutil.move(java_file, java_file+".original.withoutfails")
     save_file(java_file, new_file)
             
 def save_file(path, content):
@@ -104,15 +115,18 @@ def init_histogram(bug_type, subject, criterion, mutants_list, ignore_list):
     for mutant in mutants_list:
         if mutant in ignore_list:
             continue
-        key = "[{}] [{}] [{}] {}".format(bug_type, subject, criterion, mutant)
+        key = get_key(bug_type, subject, criterion, mutant)
         if not key in mutants_histogram:
             mutants_histogram.update({key: 0})
+
+def get_key(bug_type, subject, criterion, mutant):
+    return "[{}] [{}] [{}] {}".format(bug_type, subject, criterion, mutant)
 
 def count_mutant(bug_type, subject, criterion, mutant):
     lock.acquire()
     try:
         global mutants_histogram
-        mutant_name_key = "[{}] [{}] [{}] {}".format(bug_type, subject, criterion, mutant)
+        mutant_name_key = get_key(bug_type, subject, criterion, mutant)
         value = mutants_histogram[mutant_name_key] + 1
         mutants_histogram.update({mutant_name_key:value})
     except:

@@ -20,15 +20,19 @@ class BugType(Enum):
 
 
 def run_evosuite(evosuite_jar_path, projectCP, class_name, criterion, epa_path, stopping_condition, search_budget, test_dir='test', report_dir='report'):
-    command = 'java -jar {}evosuite-master-1.0.4-SNAPSHOT.jar -projectCP {} -class {} -criterion {} -Dstopping_condition={} -Dsearch_budget={} -Djunit_allow_restricted_libraries=true -Dp_functional_mocking=\"0.0\" -Dp_reflection_on_private=\"0.0\" -Duse_separate_classloader=\"false\" -Dwrite_covered_goals_file=\"false\" -Dwrite_all_goals_file=\"false\" -Dprint_missed_goals=\"true\" -Dtest_dir={} -Dreport_dir={} -Depa_xml_path={} -Dno_runtime_dependency=\"true\" -Dassertions=\"true\" -Dshow_progress=\"false\" -Dtimeout="300" -Dextra_timeout="3600" -Dcoverage=\"false\" -Doutput_variables=\"TARGET_CLASS,criterion,Coverage,Total_Goals,Covered_Goals,Generations,Total_Time\" > {}gen_out.txt 2> {}gen_err.txt'.format(evosuite_jar_path, projectCP, class_name, criterion, stopping_condition, search_budget, test_dir, report_dir, epa_path, test_dir, test_dir)
+    is_JDBCResultSet = "JDBCResultSet" in class_name
+    extra_parameters = "-Dassertions=\"false\" -Dminimize=\"false\"" if is_JDBCResultSet else ""
+    command = 'java -jar {}evosuite-master-1.0.4-SNAPSHOT.jar -projectCP {} -class {} -criterion {} -Dstopping_condition={} -Dsearch_budget={} -Djunit_allow_restricted_libraries=true -Dp_functional_mocking=\"0.0\" -Dp_reflection_on_private=\"0.0\" -Duse_separate_classloader=\"false\" -Dwrite_covered_goals_file=\"false\" -Dwrite_all_goals_file=\"false\" -Dprint_missed_goals=\"true\" -Dtest_dir={} -Dreport_dir={} -Depa_xml_path={} -Dno_runtime_dependency=\"true\" -Dshow_progress=\"false\" -Dtimeout="300" -Dextra_timeout="3600" -Dcoverage=\"false\" -Doutput_variables=\"TARGET_CLASS,criterion,Coverage,Total_Goals,Covered_Goals,Generations,Total_Time\" {} > {}gen_out.txt 2> {}gen_err.txt'.format(evosuite_jar_path, projectCP, class_name, criterion, stopping_condition, search_budget, test_dir, report_dir, epa_path, extra_parameters,test_dir, test_dir)
     utils.print_command(command)
     subprocess.check_output(command, shell=True)
 
-def workaround_test(test_dir, class_name, file_name):
+def workaround_test(test_dir, class_name, file_name, add_fails):
     packages = class_name.split(".")[0:-1]
     packages_dir = utils.get_package_dir(packages)
     java_file = os.path.join(test_dir, packages_dir, file_name)
     utils.replace_assert_catch_in_tests(java_file)
+    if(add_fails):
+        utils.add_fails_in_tests(java_file)
 
 def measure_evosuite(evosuite_jar_path, projectCP, testCP, class_name, epa_path, report_dir, criterion):
     utils.make_dirs_if_not_exist(report_dir)
@@ -39,6 +43,20 @@ def measure_evosuite(evosuite_jar_path, projectCP, testCP, class_name, epa_path,
     utils.print_command(command)
     subprocess.check_output(command, shell=True)
 
+def setup_subjects(results_dir_name, original_code_dir, instrumented_code_dir, name, evosuite_classes):
+    bin_original_code_dir = get_subject_original_bin_dir(results_dir_name, name)
+    bin_instrumented_code_dir = get_subject_instrumented_bin_dir(results_dir_name, name)
+    utils.compile_workdir(original_code_dir, bin_original_code_dir, evosuite_classes)
+    utils.compile_workdir(instrumented_code_dir, bin_instrumented_code_dir, evosuite_classes)
+    
+def get_subject_original_bin_dir(results_dir_name, subject):
+    return os.path.join(get_subject_dir(results_dir_name, subject), "bin", "original")
+
+def get_subject_instrumented_bin_dir(results_dir_name, subject):
+    return os.path.join(get_subject_dir(results_dir_name, subject), "bin", "instrumented")
+
+def get_subject_dir(results_dir_name, subject):
+    return os.path.join(results_dir_name, "subjects", subject)
 
 def edit_pit_pom(file_path, targetClasses, targetTests, output_file):
 
@@ -170,6 +188,7 @@ class RunTestEPA(threading.Thread):
         threading.Thread.__init__(self)
 
         self.subdir_testgen = os.path.join(results_dir_name, "testgen", name, bug_type, stopping_condition, search_budget, criterion.replace(':', '_').lower(), "{}".format(runid))
+        utils.make_dirs_if_not_exist(self.subdir_testgen)
         self.subdir_metrics = os.path.join(results_dir_name, "metrics", name, bug_type, stopping_condition, search_budget, criterion.replace(':', '_').lower(), "{}".format(runid))
         self.generated_test_report_evosuite_dir = os.path.join(self.subdir_testgen, 'report_evosuite_generated_test')
         self.subdir_mutants = subdir_mutants
@@ -194,8 +213,8 @@ class RunTestEPA(threading.Thread):
         self.runid = runid
 
         self.home_dir = os.path.dirname(os.path.abspath(__file__))
-        self.bin_original_code_dir = os.path.join(self.home_dir, self.subdir_testgen, "bin", "original")
-        self.bin_instrumented_code_dir = os.path.join(self.home_dir, self.subdir_testgen, "bin", "instrumented")
+        self.bin_original_code_dir = get_subject_original_bin_dir(results_dir_name, name)
+        self.bin_instrumented_code_dir = get_subject_instrumented_bin_dir(results_dir_name, name)
         self.method = method
         
         self.error_prot_list = error_prot_list
@@ -205,17 +224,16 @@ class RunTestEPA(threading.Thread):
     def run(self):
         if self.method in [EpatestingMethod.TESTGEN.value, EpatestingMethod.BOTH.value]:
             print('GENERATING TESTS')
-            # Compile code
-            utils.compile_workdir(self.original_code_dir, self.bin_original_code_dir, self.evosuite_classes)
-            utils.compile_workdir(self.instrumented_code_dir, self.bin_instrumented_code_dir, self.evosuite_classes)
-            
             code_dir = self.instrumented_code_dir if "epa" in self.criterion else self.original_code_dir
             bin_code_dir = self.bin_instrumented_code_dir if "epa" in self.criterion else self.bin_original_code_dir
             
             run_evosuite(evosuite_jar_path=self.evosuite_jar_path, projectCP=bin_code_dir, class_name=self.class_name, criterion=self.criterion, epa_path=self.epa_path, test_dir=self.generated_test_dir, stopping_condition=self.stopping_condition, search_budget=self.search_budget, report_dir=self.generated_test_report_evosuite_dir)
             
             if(self.bug_type.upper() == BugType.ERRPROT.name):
-                workaround_test(self.generated_test_dir, self.class_name, self.class_name.split(".")[-1]+"_ESTest.java")
+                add_fails= False;
+                if("JDBCResultSet" in self.name):
+                    add_fails= True;
+                workaround_test(self.generated_test_dir, self.class_name, self.name + "_ESTest.java", add_fails)
 
             utils.compile_test_workdir(self.generated_test_dir, code_dir, self.junit_jar, self.evosuite_classes, self.evosuite_runtime_jar_path)
 
