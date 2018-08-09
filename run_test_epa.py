@@ -30,9 +30,9 @@ def workaround_test(test_dir, class_name, file_name, add_fails):
     packages = class_name.split(".")[0:-1]
     packages_dir = utils.get_package_dir(packages)
     java_file = os.path.join(test_dir, packages_dir, file_name)
-    utils.replace_assert_catch_in_tests(java_file)
+    utils.replace_assert_catch_in_test(java_file)
     if(add_fails):
-        utils.add_fails_in_tests(java_file)
+        utils.add_fails_in_test(java_file)
 
 def measure_evosuite(evosuite_jar_path, projectCP, testCP, class_name, epa_path, report_dir, criterion):
     utils.make_dirs_if_not_exist(report_dir)
@@ -181,7 +181,31 @@ def copy_pitest_csv(name, workdir, all_report_dir):
             elif 'jacoco' in line:
                 copy_csv(file_path, '{}_jacoco'.format(name), all_report_dir)
 
+def cp_testsuite_if_exists_in_other_results(curr_bug_type, subdir_testgen, generated_test_report_evosuite_dir, class_name, name):
+    other_bug_type = BugType.ALL.name.lower() if(curr_bug_type.upper() == BugType.ERRPROT.name) else BugType.ERRPROT.name.lower()
+    other_generated_test_dir = subdir_testgen.replace(curr_bug_type, other_bug_type)
+    other_generated_test_report_evosuite_dir = generated_test_report_evosuite_dir.replace(curr_bug_type, other_bug_type)
+    test_file_path = os.path.join(other_generated_test_dir, "test", utils.get_package_dir(class_name.split(".")[0:-1]), name + "_ESTest.java")
+    testsuite_exists = check_if_exists_testgendir_in_other_bug_type(other_generated_test_dir, other_generated_test_report_evosuite_dir, class_name, test_file_path)
+    if(testsuite_exists):
+        if os.path.exists(subdir_testgen):
+            shutil.rmtree(subdir_testgen)
+        shutil.copytree(other_generated_test_dir, subdir_testgen)
+        #if other_bug_type == ERRPROT, then i need to move original test file (with asserts)
+        if(other_bug_type.upper() == BugType.ERRPROT.name):
+            test_file_path = test_file_path.replace(other_bug_type, curr_bug_type)
+            os.unlink(test_file_path)
+            shutil.move(test_file_path+".original", test_file_path)
+            print("copy {}".format(test_file_path))
+    return testsuite_exists
 
+def check_if_exists_testgendir_in_other_bug_type(generated_test_dir, generated_test_report_evosuite_dir, class_name, test_file_path):
+    exists = True
+    exists = exists and os.path.exists(os.path.join(generated_test_report_evosuite_dir, "statistics.csv"))
+    exists = exists and os.path.exists(test_file_path)
+    return exists
+
+lock = threading.Lock()
 class RunTestEPA(threading.Thread):
 
     def __init__(self, name, junit_jar, instrumented_code_dir, original_code_dir, evosuite_classes, evosuite_jar_path, evosuite_runtime_jar_path, class_name, epa_path, criterion, bug_type, stopping_condition, search_budget, runid, method, results_dir_name, subdir_mutants, error_prot_list, ignore_mutants_list, hamcrest_jar_path):
@@ -227,7 +251,19 @@ class RunTestEPA(threading.Thread):
             code_dir = self.instrumented_code_dir if "epa" in self.criterion else self.original_code_dir
             bin_code_dir = self.bin_instrumented_code_dir if "epa" in self.criterion else self.bin_original_code_dir
             
-            run_evosuite(evosuite_jar_path=self.evosuite_jar_path, projectCP=bin_code_dir, class_name=self.class_name, criterion=self.criterion, epa_path=self.epa_path, test_dir=self.generated_test_dir, stopping_condition=self.stopping_condition, search_budget=self.search_budget, report_dir=self.generated_test_report_evosuite_dir)
+            # if exists testsuite in other bug_type, copy it!
+            testsuite_exists = False
+            curr_bug_type = self.bug_type
+            try:
+                lock.acquire()
+                testsuite_exists = cp_testsuite_if_exists_in_other_results(curr_bug_type, self.subdir_testgen, self.generated_test_report_evosuite_dir, self.class_name, self.name)
+            except:
+                testsuite_exists = False
+            finally:
+                lock.release()
+
+            if(not testsuite_exists):
+                run_evosuite(evosuite_jar_path=self.evosuite_jar_path, projectCP=bin_code_dir, class_name=self.class_name, criterion=self.criterion, epa_path=self.epa_path, test_dir=self.generated_test_dir, stopping_condition=self.stopping_condition, search_budget=self.search_budget, report_dir=self.generated_test_report_evosuite_dir)
             
             if(self.bug_type.upper() == BugType.ERRPROT.name):
                 add_fails= False;
