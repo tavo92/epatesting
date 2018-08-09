@@ -40,40 +40,27 @@ measureA <- function(a,b){
 }
 
 calculateEffectSizeTable <- function() {
+        cat("Effect Size EPA Coverage default vs. mixed", "\n")
         for(subj in subjects) {
 		cat("subject: ", subj, "\n")
                 for (budget in budgets) {
-			cat("budget: ",budget,"\t\n")
+			cat("budget: ",budget,"\t")
 
                         rows_default  = subset(stats,SUBJ==subj & TOOL=='evosuite_default' & BUD==budget)
                         rows_epamixed  = subset(stats,SUBJ==subj & TOOL=='evosuite_epamixed' & BUD==budget)
-                        rows_epaalone  = subset(stats,SUBJ==subj & TOOL=='evosuite_epaalone' & BUD==budget)
 
                         epa_coverage_default = rows_default$EPA
-                        protocol_score_default = rows_default$ERRPROT
 
                         epa_coverage_epamixed = rows_epamixed$EPA
-                        protocol_score_epamixed = rows_epamixed$ERRPROT
 
-                        epa_coverage_epaalone = rows_epaalone$EPA
-                        protocol_score_epaalone = rows_epaalone$ERRPROT
-
-			my_measureA = measureA(protocol_score_default, protocol_score_epamixed)
-                        
-			cat("Default vs Mixed A12=", my_measureA, "\t\n")
-
-		         my_measureA = measureA(protocol_score_default, protocol_score_epaalone)
-                        cat("Default vs Alone A12=", my_measureA, "\t\n")
-
-			  my_measureA = measureA(protocol_score_epamixed, protocol_score_epaalone)
-                        cat("Mixed vs Alone A12=", my_measureA, "\t\n")
+			my_measureA = measureA(epa_coverage_default, epa_coverage_epamixed)
+                        cat("A12=", my_measureA, "\t")
 
 
-
-                        if (length(protocol_score_default)==0) {
+                        if (length(epa_coverage_default)==0) {
                                 cat("(p-value","Error",")\n")
                         } else {
-                                my_p_value = wilcox.test(protocol_score_default, protocol_score_epamixed)$p.value
+                                my_p_value = wilcox.test(epa_coverage_default, epa_coverage_epamixed)$p.value
                                 cat("(p-value",my_p_value,")\n")
                         }
 		}

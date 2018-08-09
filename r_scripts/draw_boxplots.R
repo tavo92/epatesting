@@ -46,6 +46,13 @@ createBoxPlot <- function() {
 				
 				boxplot(line_default, line_epamixed, branch_default, branch_epamixed,main=c("budget:",budget),ylab="LINE/BRANCH",xlab=c("subject:",subj))
 
+				err_prot_default = rows_default$ERRPROTKILLED
+				err_prot_epamixed = rows_epamixed$ERRPROTKILLED
+
+
+				boxplot(err_prot_default, err_prot_epamixed,main=c("budget:",budget),ylab="Protocol Error Killed",xlab=c("subject:",subj))
+
+
 
 #boxplot(epa_coverage_default, 
 #	epa_coverage_epamixed, 
