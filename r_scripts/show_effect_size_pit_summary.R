@@ -40,6 +40,7 @@ measureA <- function(a,b){
 }
 
 calculateEffectSizeTable <- function() {
+        cat("Effect Size PIT Score default vs. mixed", "\n")
         for(subj in subjects) {
 		cat("subject: ", subj, "\n")
                 for (budget in budgets) {
@@ -47,16 +48,12 @@ calculateEffectSizeTable <- function() {
 
                         rows_default  = subset(stats,SUBJ==subj & TOOL=='evosuite_default' & BUD==budget)
                         rows_epamixed  = subset(stats,SUBJ==subj & TOOL=='evosuite_epamixed' & BUD==budget)
-                        rows_epaalone  = subset(stats,SUBJ==subj & TOOL=='evosuite_epaalone' & BUD==budget)
 
                         epa_coverage_default = rows_default$EPA
                         pit_score_default = rows_default$PIMUT
 
                         epa_coverage_epamixed = rows_epamixed$EPA
                         pit_score_epamixed = rows_epamixed$PIMUT
-
-                        epa_coverage_epaalone = rows_epaalone$EPA
-                        pit_score_epaalone = rows_epaalone$PIMUT
 
 			my_measureA = measureA(pit_score_default, pit_score_epamixed)
                         cat("A12=", my_measureA, "\t")
