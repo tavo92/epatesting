@@ -191,12 +191,12 @@ def cp_testsuite_if_exists_in_other_results(curr_bug_type, subdir_testgen, gener
         if os.path.exists(subdir_testgen):
             shutil.rmtree(subdir_testgen)
         shutil.copytree(other_generated_test_dir, subdir_testgen)
+        print("copy {}".format(test_file_path))
         #if other_bug_type == ERRPROT, then i need to move original test file (with asserts)
         if(other_bug_type.upper() == BugType.ERRPROT.name):
             test_file_path = test_file_path.replace(other_bug_type, curr_bug_type)
             os.unlink(test_file_path)
             shutil.move(test_file_path+".original", test_file_path)
-            print("copy {}".format(test_file_path))
     return testsuite_exists
 
 def check_if_exists_testgendir_in_other_bug_type(generated_test_dir, generated_test_report_evosuite_dir, class_name, test_file_path):
@@ -259,6 +259,7 @@ class RunTestEPA(threading.Thread):
                 testsuite_exists = cp_testsuite_if_exists_in_other_results(curr_bug_type, self.subdir_testgen, self.generated_test_report_evosuite_dir, self.class_name, self.name)
             except:
                 testsuite_exists = False
+                print("error copying from other bug_type folder to {}".format(self.subdir_testgen))
             finally:
                 lock.release()
 
