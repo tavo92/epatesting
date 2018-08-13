@@ -48,6 +48,12 @@ calculateEffectSize <- function() {
 	                cat("budget:",budget)
         	        cat("\n")
 
+			# LINE:BRANCH
+			default_rows  = subset(stats,SUBJ==subj & TOOL=='evosuite_default' & BUD==budget)
+			line_branch_errors = default_rows$ERRPROT_KILLED
+			cat("length(LINE:BRANCH)=", length(line_branch_errors))
+			cat("\n")
+			
 			# LINE:BRANCH:EXCEPTION
 			default_rows  = subset(stats,SUBJ==subj & TOOL=='line_branch_exception' & BUD==budget)
 			default_errors = default_rows$ERRPROT_KILLED
@@ -59,48 +65,54 @@ calculateEffectSize <- function() {
 			epatransition_errors = epatransition_rows$ERRPROT_KILLED
 			cat("length(EPATRANSITION)=", length(epatransition_errors))
 			cat("\n")
-
-			# LINE:BRANCH:EPATRANSITION
-			epamixed_rows  = subset(stats,SUBJ==subj & TOOL=='evosuite_epamixed' & BUD==budget)
-			line_branch_epatransition_errors = epatransition_rows$ERRPROT_KILLED
-			cat("length(LINE:BRANCH:EPATRANSITION)=", length(line_branch_epatransition_errors))
-			cat("\n")
-
-			# EPAEXCEPTION
-			epaexception_rows = subset(stats,SUBJ==subj & TOOL=='epaexception' & BUD==budget)
-			epaexception_errors = epaexception_rows$ERRPROT_KILLED
-			cat("length(EXCEPTION)=", length(epaexception_errors))
-			cat("\n")
-
-			# LINE:BRANCH:EPAEXCEPTION
-			line_branch_epaexception_rows = subset(stats,SUBJ==subj & TOOL=='line_branch_epaexception' & BUD==budget)
-			line_branch_epaexception_errors = line_branch_epaexception_rows$ERRPROT_KILLED
-			cat("length(LINE:BRANCH:EPAEXCEPTION)=", length(line_branch_epaexception_errors))
+			
+			# EPATRANSITION:EPAEXCEPTION
+			epatransition_epaexception_rows = subset(stats,SUBJ==subj & TOOL=='epatransition_epaexception' & BUD==budget)
+			epatransition_epaexception_errors = epatransition_epaexception_rows$ERRPROT_KILLED
+			cat("length(EPATRANSITION:EPAEXCEPTION)=", length(epatransition_epaexception_errors))
 			cat("\n")
 			
-
 			# EPAADJACENTEDGES
 			edges_rows = subset(stats,SUBJ==subj & TOOL=='epaadjacentedges' & BUD==budget)
 			edges_errors = edges_rows$ERRPROT_KILLED
 			cat("length(EPAADJACENTEDGES)=", length(edges_errors))
 			cat("\n")
 
-			# LINE:BRANCH:EPAADJACENTEDGES
-			line_branch_edges_rows = subset(stats,SUBJ==subj & TOOL=='line_branch_epaadjacentedges' & BUD==budget)
-			line_branch_edges_errors = line_branch_edges_rows$ERRPROT_KILLED
-			cat("length(LINE:BRANCH:EPAADJACENTEDGES)=", length(line_branch_edges_rows))
+			# LINE:BRANCH:EXCEPTION:EPATRANSITION
+			epamixed_rows  = subset(stats,SUBJ==subj & TOOL=='line_branch_exception_epatransition' & BUD==budget)
+			line_branch_exception_epatransition_errors = epatransition_rows$ERRPROT_KILLED
+			cat("length(LINE:BRANCH:EXCEPTION:EPATRANSITION)=", length(line_branch_exception_epatransition_errors))
 			cat("\n")
 
-			# LINE:BRANCH:EPATRANSITION:EPAEXCEPTION:EPAADJACENTEDGES
-			line_branch_tran_except_edges_rows = subset(stats,SUBJ==subj & TOOL=='line_branch_epatransition_epaexception_epaadjacentedges' & BUD==budget)
-			line_branch_tran_except_edges_errors = line_branch_tran_except_edges_rows$ERRPROT_KILLED
-			cat("length(LINE:BRANCH:EPATRANSITION:EPAEXCEPTION:EPAADJACENTEDGES)=", length(line_branch_tran_except_edges_errors))
+			# LINE:BRANCH:EXCEPTION:EPATRANSITION:EPAEXCEPTION
+			line_branch_exception_epatransition_epaexception_rows = subset(stats,SUBJ==subj & TOOL=='line_branch_exception_epatransition_epaexception' & BUD==budget)
+			line_branch_exception_epatransition_epaexception_errors = line_branch_exception_epatransition_epaexception_rows$ERRPROT_KILLED
+			cat("length(LINE:BRANCH:EXCEPTION:EPATRANSITION:EPAEXCEPTION)=", length(line_branch_exception_epatransition_epaexception_errors))
+			cat("\n")
+
+			# LINE:BRANCH:EXCEPTION:EPAADJACENTEDGES
+			line_branch_exception_edges_rows = subset(stats,SUBJ==subj & TOOL=='line_branch_exception_epaadjacentedges' & BUD==budget)
+			line_branch_edges_errors = line_branch_exception_edges_rows$ERRPROT_KILLED
+			cat("length(LINE:BRANCH:EXCEPTION:EPAADJACENTEDGES)=", length(line_branch_edges_errors))
+			cat("\n")
 			cat("\n")
 
 			cat("---------------------------------------------------------------------------------","\n")
         	        cat("\n")
 
 
+			cat("LINE:BRANCH:EXCEPTION vs. LINE:BRANCH","\n")
+        	        cat("\n")
+			my_measureA = measureA(default_errors, line_branch_errors)
+			cat("A12=", my_measureA, "\n")
+			if (length(default_errors)==0) {
+				cat("p-value","Error","\n")
+			} else {
+				my_p_value = wilcox.test(default_errors, line_branch_errors)$p.value	
+				cat("p-value",my_p_value,"\n")
+			}
+        	        cat("\n")
+					
 			cat("LINE:BRANCH:EXCEPTION vs. EPATRANSITION","\n")
         	        cat("\n")
 			my_measureA = measureA(default_errors, epatransition_errors)
@@ -113,14 +125,14 @@ calculateEffectSize <- function() {
 			}
         	        cat("\n")
 
-			cat("LINE:BRANCH:EXCEPTION vs. EPAEXCEPTION","\n")
+			cat("LINE:BRANCH:EXCEPTION vs. EPATRANSITION:EPAEXCEPTION","\n")
         	        cat("\n")
-			my_measureA = measureA(default_errors, epaexception_errors)
+			my_measureA = measureA(default_errors, epatransition_epaexception_errors)
 			cat("A12=", my_measureA, "\n")
 			if (length(default_errors)==0) {
 				cat("p-value","Error","\n")
 			} else {
-				my_p_value = wilcox.test(default_errors, epaexception_errors)$p.value	
+				my_p_value = wilcox.test(default_errors, epatransition_epaexception_errors)$p.value	
 				cat("p-value",my_p_value,"\n")
 			}
         	        cat("\n")
@@ -139,33 +151,33 @@ calculateEffectSize <- function() {
         	        cat("\n")
 
 
-			cat("LINE:BRANCH:EXCEPTION vs. LINE:BRANCH:EPATRANSITION","\n")
+			cat("LINE:BRANCH:EXCEPTION vs. LINE:BRANCH:EXCEPTION:EPATRANSITION","\n")
         	        cat("\n")
-			my_measureA = measureA(default_errors, line_branch_epatransition_errors)
+			my_measureA = measureA(default_errors, line_branch_exception_epatransition_errors)
 			cat("A12=", my_measureA, "\n")
 			if (length(default_errors)==0) {
 				cat("p-value","Error","\n")
 			} else {
-				my_p_value = wilcox.test(default_errors, line_branch_epatransition_errors)$p.value	
+				my_p_value = wilcox.test(default_errors, line_branch_exception_epatransition_errors)$p.value	
 				cat("p-value",my_p_value,"\n")
 			}
         	        cat("\n")
 
 
-			cat("LINE:BRANCH:EXCEPTION vs. LINE:BRANCH:EPAEXCEPTION","\n")
+			cat("LINE:BRANCH:EXCEPTION vs. LINE:BRANCH:EXCEPTION:EPATRANSITION:EPAEXCEPTION","\n")
         	        cat("\n")
-			my_measureA = measureA(default_errors, line_branch_epaexception_errors)
+			my_measureA = measureA(default_errors, line_branch_exception_epatransition_epaexception_errors)
 			cat("A12=", my_measureA, "\n")
 			if (length(default_errors)==0) {
 				cat("p-value","Error","\n")
 			} else {
-				my_p_value = wilcox.test(default_errors, line_branch_epaexception_errors)$p.value	
+				my_p_value = wilcox.test(default_errors, line_branch_exception_epatransition_epaexception_errors)$p.value	
 				cat("p-value",my_p_value,"\n")
 			}
         	        cat("\n")
 
 
-			cat("LINE:BRANCH:EXCEPTION vs. LINE:BRANCH:EPAADJACENTEDGES","\n")
+			cat("LINE:BRANCH:EXCEPTION vs. LINE:BRANCH:EXCEPTION:EPAADJACENTEDGES","\n")
         	        cat("\n")
 			my_measureA = measureA(default_errors, line_branch_edges_errors)
 			cat("A12=", my_measureA, "\n")
@@ -176,18 +188,6 @@ calculateEffectSize <- function() {
 				cat("p-value",my_p_value,"\n")
 			}
         	        cat("\n")
-
-
-			cat("LINE:BRANCH:EXCEPTION vs. LINE:BRANCH:EPATRANSITION:EPAEXCEPTION:EPAADJACENTEDGES","\n")
-        	        cat("\n")
-			my_measureA = measureA(default_errors, line_branch_tran_except_edges_errors)
-			cat("A12=", my_measureA, "\n")
-			if (length(default_errors)==0) {
-				cat("p-value","Error","\n")
-			} else {
-				my_p_value = wilcox.test(default_errors, line_branch_tran_except_edges_errors)$p.value	
-				cat("p-value",my_p_value,"\n")
-			}
         	        cat("\n")
 		}
 	}
