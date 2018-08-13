@@ -270,7 +270,7 @@ class RunTestEPA(threading.Thread):
                 add_fails= False;
                 if("JDBCResultSet" in self.name):
                     add_fails= True;
-                workaround_test(self.generated_test_dir, self.class_name, self.name + "_ESTest.java", add_fails)
+                workaround_test(self.generated_test_dir, self.class_name, self.class_name.split(".")[-1]+"_ESTest.java", add_fails)
 
             utils.compile_test_workdir(self.generated_test_dir, code_dir, self.junit_jar, self.evosuite_classes, self.evosuite_runtime_jar_path)
 
