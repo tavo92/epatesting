@@ -256,7 +256,7 @@ class RunTestEPA(threading.Thread):
             curr_bug_type = self.bug_type
             try:
                 lock.acquire()
-                testsuite_exists = cp_testsuite_if_exists_in_other_results(curr_bug_type, self.subdir_testgen, self.generated_test_report_evosuite_dir, self.class_name, self.name)
+                testsuite_exists = cp_testsuite_if_exists_in_other_results(curr_bug_type, self.subdir_testgen, self.generated_test_report_evosuite_dir, self.class_name, self.class_name.split(".")[-1])
             except:
                 testsuite_exists = False
                 print("error copying from other bug_type folder to {}".format(self.subdir_testgen))
