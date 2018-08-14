@@ -80,7 +80,7 @@ calculateEffectSize <- function() {
 
 			# LINE:BRANCH:EXCEPTION:EPATRANSITION
 			epamixed_rows  = subset(stats,SUBJ==subj & TOOL=='line_branch_exception_epatransition' & BUD==budget)
-			line_branch_exception_epatransition_errors = epatransition_rows$PIMUT
+			line_branch_exception_epatransition_errors = epamixed_rows$PIMUT
 			cat("length(LINE:BRANCH:EXCEPTION:EPATRANSITION)=", length(line_branch_exception_epatransition_errors))
 			cat("\n")
 
@@ -92,8 +92,8 @@ calculateEffectSize <- function() {
 
 			# LINE:BRANCH:EXCEPTION:EPAADJACENTEDGES
 			line_branch_exception_edges_rows = subset(stats,SUBJ==subj & TOOL=='line_branch_exception_epaadjacentedges' & BUD==budget)
-			line_branch_edges_errors = line_branch_exception_edges_rows$PIMUT
-			cat("length(LINE:BRANCH:EXCEPTION:EPAADJACENTEDGES)=", length(line_branch_edges_errors))
+			line_branch_exception_edges_errors = line_branch_exception_edges_rows$PIMUT
+			cat("length(LINE:BRANCH:EXCEPTION:EPAADJACENTEDGES)=", length(line_branch_exception_edges_errors))
 			cat("\n")
 
 			cat("\n")
@@ -180,12 +180,12 @@ calculateEffectSize <- function() {
 
 			cat("LINE:BRANCH:EXCEPTION vs. LINE:BRANCH:EXCEPTION:EPAADJACENTEDGES","\n")
         	        cat("\n")
-			my_measureA = measureA(default_errors, line_branch_edges_errors)
+			my_measureA = measureA(default_errors, line_branch_exception_edges_errors)
 			cat("A12=", my_measureA, "\n")
 			if (length(default_errors)==0) {
 				cat("p-value","Error","\n")
 			} else {
-				my_p_value = wilcox.test(default_errors, line_branch_edges_errors)$p.value	
+				my_p_value = wilcox.test(default_errors, line_branch_exception_edges_errors)$p.value
 				cat("p-value",my_p_value,"\n")
 			}
         	        cat("\n")
