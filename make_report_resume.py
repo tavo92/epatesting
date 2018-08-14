@@ -78,16 +78,19 @@ def read_pit_csv(file_path):
     return killed / total
 
 def read_mujava_coverage_csv(mujava_csv):
-    mujava_coverage = 0.0
-    mutants_killed = 0
-    err_prot_killed = 0.0
-    with open(mujava_csv, newline='') as csvfile:
-        reader = csv.reader(csvfile)
-        next(reader)
-        for row in reader:
-            mutants_killed = row[1]
-            mujava_coverage = row[2]
-            err_prot_killed = row[4]
+    mujava_coverage = 'N/A'
+    mutants_killed = 'N/A'
+    err_prot_killed = 'N/A'
+    try:
+        with open(mujava_csv, newline='') as csvfile:
+            reader = csv.reader(csvfile)
+            next(reader)
+            for row in reader:
+                mutants_killed = row[1]
+                mujava_coverage = row[2]
+                err_prot_killed = row[4]
+    except:
+        print("File {} doesn't exists".format(mujava_csv))
     return mujava_coverage, mutants_killed, err_prot_killed
 
 
