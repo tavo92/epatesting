@@ -20,9 +20,9 @@ class BugType(Enum):
 
 
 def run_evosuite(evosuite_jar_path, projectCP, class_name, criterion, epa_path, stopping_condition, search_budget, test_dir='test', report_dir='report'):
-    is_JDBCResultSet = "JDBCResultSet" in class_name
-    extra_parameters = "-Dassertions=\"false\" -Dminimize=\"false\"" if is_JDBCResultSet else ""
-    command = 'java -jar {}evosuite-master-1.0.4-SNAPSHOT.jar -projectCP {} -class {} -criterion {} -Dstopping_condition={} -Dsearch_budget={} -Djunit_allow_restricted_libraries=true -Dp_functional_mocking=\"0.0\" -Dp_reflection_on_private=\"0.0\" -Duse_separate_classloader=\"false\" -Dwrite_covered_goals_file=\"false\" -Dwrite_all_goals_file=\"false\" -Dprint_missed_goals=\"true\" -Dtest_dir={} -Dreport_dir={} -Depa_xml_path={} -Dno_runtime_dependency=\"true\" -Dshow_progress=\"false\" -Dtimeout="300" -Dextra_timeout="3600" -Dcoverage=\"false\" -Doutput_variables=\"TARGET_CLASS,criterion,Coverage,Total_Goals,Covered_Goals,Generations,Total_Time\" {} > {}gen_out.txt 2> {}gen_err.txt'.format(evosuite_jar_path, projectCP, class_name, criterion, stopping_condition, search_budget, test_dir, report_dir, epa_path, extra_parameters,test_dir, test_dir)
+    #is_JDBCResultSet = "JDBCResultSet" in class_name
+    #extra_parameters = "-Dassertions=\"false\" -Dminimize=\"false\"" if is_JDBCResultSet else ""
+    command = 'java -jar {}evosuite-master-1.0.4-SNAPSHOT.jar -projectCP {} -class {} -criterion {} -Dstopping_condition={} -Dsearch_budget={} -Djunit_allow_restricted_libraries=true -Dp_functional_mocking=\"0.0\" -Dp_reflection_on_private=\"0.0\" -Duse_separate_classloader=\"false\" -Dwrite_covered_goals_file=\"false\" -Dwrite_all_goals_file=\"false\" -Dprint_missed_goals=\"true\" -Dtest_dir={} -Dreport_dir={} -Depa_xml_path={} -Dno_runtime_dependency=\"true\" -Dshow_progress=\"false\" -Dtimeout="300" -Doutput_variables=\"TARGET_CLASS,criterion,Coverage,Total_Goals,Covered_Goals,Generations,Total_Time\" -Dassertions=\"true\" -Dminimize=\"true\" -Dcoverage=\"true\" -Djunit_check_timeout="600" -Dassertion_timeout="600" > {}gen_out.txt 2> {}gen_err.txt'.format(evosuite_jar_path, projectCP, class_name, criterion, stopping_condition, search_budget, test_dir, report_dir, epa_path,test_dir, test_dir)
     utils.print_command(command)
     subprocess.check_output(command, shell=True)
 
@@ -268,8 +268,8 @@ class RunTestEPA(threading.Thread):
             
             if(self.bug_type.upper() == BugType.ERRPROT.name):
                 add_fails= False;
-                if("JDBCResultSet" in self.name):
-                    add_fails= True;
+                #if("JDBCResultSet" in self.name):
+                    #add_fails= True;
                 workaround_test(self.generated_test_dir, self.class_name, self.class_name.split(".")[-1]+"_ESTest.java", add_fails)
 
             utils.compile_test_workdir(self.generated_test_dir, code_dir, self.junit_jar, self.evosuite_classes, self.evosuite_runtime_jar_path)
@@ -306,6 +306,8 @@ class RunTestEPA(threading.Thread):
             mujava_csv = os.path.join(self.generated_report_mujava, "mujava_report.csv")
             if os.path.exists(mujava_csv):
                 copy_csv(mujava_csv, 'mujava_{}'.format(self.name), all_report_dir)
+            else:
+                print("Does not exists mujava file {}".format(mujava_csv))
             
             epacoverage_csv = os.path.join(all_report_dir, "epacoverage_{}.csv".format(self.name))
             statistics_testgen_csv = os.path.join(all_report_dir, "statistics_testgen_{}.csv".format(self.name))
