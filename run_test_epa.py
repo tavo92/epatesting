@@ -10,9 +10,11 @@ import mujava_coverage
 import utils
 
 class EpatestingMethod(Enum):
-    TESTGEN = 1
-    METRICS = 2
+    ONLY_TESTGEN = 1
+    ONLY_METRICS = 2
     BOTH = 3
+    BOTH_WITHOUT_MUJAVA = 4
+    ONLY_METRICS_WITHOUT_MUJAVA = 5
     
 class BugType(Enum):
     ALL = 1
@@ -246,7 +248,7 @@ class RunTestEPA(threading.Thread):
         self.hamcrest_jar_path = hamcrest_jar_path 
 
     def run(self):
-        if self.method in [EpatestingMethod.TESTGEN.value, EpatestingMethod.BOTH.value]:
+        if self.method in [EpatestingMethod.ONLY_TESTGEN.value, EpatestingMethod.BOTH.value]:
             print('GENERATING TESTS')
             code_dir = self.instrumented_code_dir if "epa" in self.criterion else self.original_code_dir
             bin_code_dir = self.bin_instrumented_code_dir if "epa" in self.criterion else self.bin_original_code_dir
@@ -274,7 +276,7 @@ class RunTestEPA(threading.Thread):
 
             utils.compile_test_workdir(self.generated_test_dir, code_dir, self.junit_jar, self.evosuite_classes, self.evosuite_runtime_jar_path)
 
-        if self.method in [EpatestingMethod.METRICS.value, EpatestingMethod.BOTH.value]:
+        if self.method in [EpatestingMethod.ONLY_METRICS.value, EpatestingMethod.BOTH.value, EpatestingMethod.BOTH_WITHOUT_MUJAVA.value, EpatestingMethod.ONLY_METRICS_WITHOUT_MUJAVA.value]:
             print('GENERATING METRICS')
             if not os.path.exists(self.subdir_testgen):
                 print("not found testgen folder ! '{}'".format(self.subdir_testgen))
@@ -285,9 +287,10 @@ class RunTestEPA(threading.Thread):
             measure_evosuite(evosuite_jar_path=self.evosuite_jar_path, projectCP=self.bin_instrumented_code_dir, testCP=self.generated_test_dir, class_name=self.class_name, epa_path=self.epa_path, report_dir=self.generated_report_evosuite_dir, criterion="epaadjacentedges")
 
             # Run Pitest to measure
-            pitest_measure(self.generated_report_pitest_dir, self.class_name, "{}_ESTest".format(self.class_name), self.original_code_dir, self.generated_test_dir)
+            #pitest_measure(self.generated_report_pitest_dir, self.class_name, "{}_ESTest".format(self.class_name), self.original_code_dir, self.generated_test_dir)
             
-            mujava_measure(self.bug_type, self.name, self.criterion, self.subdir_mutants, self.error_prot_list, self.ignore_mutants_list, self.bin_original_code_dir, self.generated_test_dir, self.class_name, self.junit_jar, self.hamcrest_jar_path, self.generated_report_mujava)
+            if self.method in [EpatestingMethod.ONLY_METRICS.value, EpatestingMethod.BOTH.value]:
+                mujava_measure(self.bug_type, self.name, self.criterion, self.subdir_mutants, self.error_prot_list, self.ignore_mutants_list, self.bin_original_code_dir, self.generated_test_dir, self.class_name, self.junit_jar, self.hamcrest_jar_path, self.generated_report_mujava)
 
             # Resume the reports generated
             all_report_dir = os.path.join(self.subdir_metrics, 'all_reports')
