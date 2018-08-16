@@ -248,7 +248,7 @@ class RunTestEPA(threading.Thread):
         self.hamcrest_jar_path = hamcrest_jar_path 
 
     def run(self):
-        if self.method in [EpatestingMethod.ONLY_TESTGEN.value, EpatestingMethod.BOTH.value]:
+        if self.method in [EpatestingMethod.ONLY_TESTGEN.value, EpatestingMethod.BOTH.value, EpatestingMethod.BOTH_WITHOUT_MUJAVA.value]:
             print('GENERATING TESTS')
             code_dir = self.instrumented_code_dir if "epa" in self.criterion else self.original_code_dir
             bin_code_dir = self.bin_instrumented_code_dir if "epa" in self.criterion else self.bin_original_code_dir
