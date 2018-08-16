@@ -23,7 +23,7 @@ createBoxPlot <- function() {
 			if (budget=='600') {
 			
 				default_rows  = subset(stats,SUBJ==subj & TOOL=='line_branch_exception' & BUD==budget)
-				epatransition_rows  = subset(stats,SUBJ==subj & TOOL=='epatransition' & BUD==budget)
+				epatransition_rows  = subset(stats,SUBJ==subj & TOOL=='evosuite_epaalone' & BUD==budget)
 				epatransition_epaexception_rows  = subset(stats,SUBJ==subj & TOOL=='epatransition_epaexception' & BUD==budget)
 				edges_rows  = subset(stats,SUBJ==subj & TOOL=='epaadjacentedges' & BUD==budget)
 
@@ -32,7 +32,7 @@ createBoxPlot <- function() {
 				epatransition_epaexception_pit = epatransition_epaexception_rows$PIMUT
 				edges_pit = edges_rows$PIMUT
 
-				boxplot(default_pit, edges_pit,  line_branch_edges_pit, line_branch_transition_exception_edges_pit,names=c("default","epatransition","epatra_epaexcep","edges"),main=c("budget:",budget),ylab="PIT Score",xlab=c("subject:",subj))
+				boxplot(default_pit, epatransition_pit, epatransition_epaexception_pit, edges_pit, names=c("default","epatr","epatr_epaexcep","edges"),main=c("budget:",budget),ylab="PIT Score",xlab=c("subject:",subj))
 
 
 #boxplot(epa_coverage_default, 
