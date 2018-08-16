@@ -20,6 +20,15 @@ printPitMutationScoreMedian <- function() {
 	for(subj in subjects) {
 		for (budget in budgets) {
 			if (budget=='600') {
+			cat("\n")
+			cat("\n")
+			cat("-------------------------------------------\n")
+			cat("subject:", subj)
+			cat("\n")
+			cat("budget:",budget)
+			cat("\n")
+			cat("-------------------------------------------\n")
+
 				
 			# LINE:BRANCH
 			default_rows  = subset(stats,SUBJ==subj & TOOL=='evosuite_default' & BUD==budget)
@@ -67,7 +76,8 @@ printPitMutationScoreMedian <- function() {
 			line_branch_exception_edges_rows = subset(stats,SUBJ==subj & TOOL=='line_branch_exception_epaadjacentedges' & BUD==budget)
 			line_branch_exception_edges_errors = line_branch_exception_edges_rows$PIMUT
 			cat("mean(LINE:BRANCH:EXCEPTION:EPAADJACENTEDGES)=", mean(line_branch_exception_edges_errors))
-
+			cat("\n")
+			cat("\n")
 
 #boxplot(epa_coverage_default, 
 #	epa_coverage_epamixed, 
