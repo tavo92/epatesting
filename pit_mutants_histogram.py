@@ -64,7 +64,7 @@ def pit_mutants_histogram(criterion, budget, stopping_condition, mutations_csv_p
 
 def get_histogram():
     global mutants_histogram
-    ret = "SUBJECT,CRITERION,MUTANT_METHOD_LINE,SURVIVED,NO_COVERAGE,KILLED,ALIVE(SURVIVED+NO_COVERAGE)"
+    ret = "SUBJECT,CRITERION,BUDGET,STOP_COND,MUTANT_METHOD_LINE,SURVIVED,NO_COVERAGE,KILLED,ALIVE(SURVIVED+NO_COVERAGE)"
     for key in mutants_histogram.keys():
         key_value = key.split(" ")
         subject = key_value[0]
