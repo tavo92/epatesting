@@ -53,11 +53,14 @@ def pit_mutants_histogram(criterion, budget, stopping_condition, mutations_csv_p
     #file = csv.DictReader(open(mutations_csv_path), newline='', )
     with open(mutations_csv_path, newline='') as csvfile:
         reader = csv.DictReader(csvfile, fieldnames=['NAME','SUBJECT','MUTANT_NAME','METHOD','LINE','RESULT','TEST'])
+        keys_by_file = set()
         for row in reader:
             subject = row["SUBJECT"]
             mutant_key = row["MUTANT_NAME"]+"_"+row["METHOD"]+"_"+row["LINE"]
             result = row["RESULT"]
-            count_mutant(subject, criterion, budget, stopping_condition, mutant_key, result)
+            if mutant_key not in keys_by_file:
+                count_mutant(subject, criterion, budget, stopping_condition, mutant_key, result)
+                keys_by_file.add(mutant_key)
 
 def get_histogram():
     global mutants_histogram
