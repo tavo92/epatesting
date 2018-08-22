@@ -7,6 +7,7 @@ from make_report_resume import merge_all_resumes
 import os
 import time
 import utils
+import pit_mutants_histogram
 
 class Subject:
 
@@ -175,6 +176,7 @@ if __name__ == '__main__':
             print("=====================================>{} PROGRESS {}% ({}/{}) Elapsed time: {}:{}:{}<=====================================".format(time.strftime("%H:%M:%S"), percent_finished, finished_subjects, total_subjects, total_time[0], total_time[1], total_time[2]))
     
     merge_all_resumes(all_resumes, 'all_resumes.csv')
-    utils.save_file("histogram.txt", utils.get_mutant_histogram())
+    utils.save_file("mujava_histogram.txt", utils.get_mutant_histogram())
+    utils.save_file("pit_histogram.txt", pit_mutants_histogram.get_histogram())
     print("Done! {}".format(time.strftime("%H:%M:%S")))
     print_elapsed_time()

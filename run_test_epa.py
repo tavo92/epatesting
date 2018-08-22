@@ -8,6 +8,7 @@ from enum import Enum
 from make_report_resume import make_report_resume
 import mujava_coverage
 import utils
+from pit_mutants_histogram import pit_mutants_histogram
 
 class EpatestingMethod(Enum):
     ONLY_TESTGEN = 1
@@ -15,6 +16,7 @@ class EpatestingMethod(Enum):
     BOTH = 3
     BOTH_WITHOUT_MUJAVA = 4
     ONLY_METRICS_WITHOUT_MUJAVA = 5
+    ONLY_PIT_MUTANTS_HISTOGRAM = 6
     
 class BugType(Enum):
     ALL = 1
@@ -154,6 +156,13 @@ def pitest_measure(pitest_dir, targetClasses, targetTests, class_dir, test_dir):
     shutil.copytree(test_dir, pitest_dir_src_test_java)
 
     run_pitest(os.path.join(pitest_dir, ""))
+
+def get_mutation_csv_pit(pitest_dir):
+    pit_reports_dir = os.path.join(pitest_dir, "target", "pit-reports")
+    for date_dir in os.listdir(pit_reports_dir):
+        mutations_csv = os.path.join(pit_reports_dir, date_dir, "mutations.csv")
+        if os.path.exists(mutations_csv):
+            return mutations_csv
     
 def mujava_measure(bug_type, name, criterion, subdir_mutants, error_prot_list, ignore_mutants_list, bin_original_code_dir, generated_test_dir, class_name, junit_jar, hamcrest_jar, generated_report_mujava):
     mujava = mujava_coverage.MuJava(bug_type, name, criterion, subdir_mutants, error_prot_list, ignore_mutants_list, bin_original_code_dir, generated_test_dir, class_name, junit_jar, hamcrest_jar, generated_report_mujava)
@@ -318,7 +327,15 @@ class RunTestEPA(threading.Thread):
             mutations_csv = os.path.join(all_report_dir, "{}_mutations.csv".format(self.name))
             resume_csv = os.path.join(self.subdir_metrics, 'resume.csv')
             criterion = get_alternative_criterion_names(self.criterion)
+            
+            if self.bug_type.upper() == BugType.ALL.name:
+                pit_mutants_histogram(self.criterion, self.search_budget, self.stopping_condition, mutations_csv)
+            
             make_report_resume(self.class_name, epacoverage_csv, statistics_testgen_csv, jacoco_csv, mutations_csv, resume_csv, self.runid, self.stopping_condition, self.search_budget, criterion, self.bug_type, mujava_csv)
+        
+        if self.bug_type.upper() == BugType.ALL.name and self.method in [EpatestingMethod.ONLY_PIT_MUTANTS_HISTOGRAM.value]:
+            mutations_csv = get_mutation_csv_pit(self.generated_report_pitest_dir)
+            pit_mutants_histogram(self.criterion, self.search_budget, self.stopping_condition, mutations_csv)
             
 def get_alternative_criterion_names(criterion):
     if (criterion == "line:branch"):
