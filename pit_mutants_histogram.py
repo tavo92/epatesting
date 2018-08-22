@@ -1,5 +1,6 @@
 import argparse
 import csv
+import threading
 
 class Mutant_result:
     def __init__(self):
@@ -31,23 +32,32 @@ class Mutant_result:
 
 mutants_histogram = {}
 
-def get_key(subject, criterion, budget, conditionstopping, mutant):
-    return "{} {} {} {} {}".format(subject, criterion, budget, conditionstopping, mutant)
+def get_first_key(subject, budget, stopping_condition, mutant):
+    return "{} {} {} {}".format(subject, budget, stopping_condition, mutant)
+
+def get_second_key(criterion):
+    return "{}".format(criterion)
 
 def count_mutant(subject, criterion, budget, stopping_condition, mutant, result):
+    lock.acquire()
     try:
         global mutants_histogram
-        mutant_name_key = get_key(subject, criterion, budget, stopping_condition, mutant)
-        if not mutant_name_key in mutants_histogram:
-            mutant_result = Mutant_result()
-        else:
-            mutant_result = mutants_histogram[mutant_name_key]
+        first_key = get_first_key(subject, budget, stopping_condition, mutant)
+        second_key = get_second_key(criterion)
+        value = {}
+        mutant_result = Mutant_result()
+        if first_key in mutants_histogram:
+            value = mutants_histogram[first_key]
+            if second_key in value:
+                mutant_result = value[second_key]
         
         mutant_result.add_result(result)
-        value = mutant_result
-        mutants_histogram.update({mutant_name_key:value})
+        value.update({second_key:mutant_result})
+        mutants_histogram.update({first_key:value})
     except:
-            print("ERROR! Adding mutant {}".format(mutant_name_key))
+            print("ERROR! Adding mutant {}".format(first_key))
+    finally:
+        lock.release()
 
 def pit_mutants_histogram(criterion, budget, stopping_condition, mutations_csv_path):
     #file = csv.DictReader(open(mutations_csv_path), newline='', )
@@ -62,23 +72,46 @@ def pit_mutants_histogram(criterion, budget, stopping_condition, mutations_csv_p
                 count_mutant(subject, criterion, budget, stopping_condition, mutant_key, result)
                 keys_by_file.add(mutant_key)
 
+lock = threading.Lock()
+headers_list = ["SUBJECT","BUDGET","STOP_COND","MUTANT_METHOD_LINE"]
 def get_histogram():
+    def add_header(name):
+        global headers_list
+        if name not in headers_list:
+            headers_list.append(name)
+
     global mutants_histogram
-    ret = "SUBJECT,CRITERION,BUDGET,STOP_COND,MUTANT_METHOD_LINE,SURVIVED,NO_COVERAGE,KILLED,ALIVE(SURVIVED+NO_COVERAGE)"
+    data = ""
     for key in mutants_histogram.keys():
         key_value = key.split(" ")
         subject = key_value[0]
-        criterion = key_value[1]
-        budget = key_value[2]
-        stopping_condition = key_value[3]
-        mutant = key_value[4]
+        budget = key_value[1]
+        stopping_condition = key_value[2]
+        mutant = key_value[3]
+        data += "{},{},{},{}".format(subject, budget, stopping_condition, mutant)
         value = mutants_histogram[key]
-        survived = value.get_survived()
-        no_coverage = value.get_nocoverage()
-        killed = value.get_killed()
-        alive = survived + no_coverage
-        ret += "\n{},{},{},{},{},{},{},{},{} ".format(subject, criterion, budget, stopping_condition, mutant, survived, no_coverage, killed, alive)
-    return ret
+        for sec_key in value.keys():
+            criterion = sec_key
+            sec_value = value[sec_key]
+            survived = sec_value.get_survived()
+            no_coverage = sec_value.get_nocoverage()
+            killed = sec_value.get_killed()
+            alive = survived + no_coverage
+            add_header("SURVIVED_{}".format(criterion))
+            add_header("NO_COVERAGE_{}".format(criterion))
+            add_header("KILLED_{}".format(criterion))
+            add_header("ALIVE_{}".format(criterion))
+            data += ",{},{},{},{}".format(survived, no_coverage, killed, alive)
+        data += "\n"
+    headers = ""
+    add_colon = False
+    for header in headers_list:
+        if add_colon:
+            headers += ","
+        else:
+            add_colon = True
+        headers += header
+    return headers + "\n" + data
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
