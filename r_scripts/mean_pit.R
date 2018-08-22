@@ -20,14 +20,12 @@ printPitMutationScoreMedian <- function() {
 	for(subj in subjects) {
 		for (budget in budgets) {
 			if (budget=='600') {
-			cat("\n")
-			cat("\n")
-			cat("-------------------------------------------\n")
-			cat("subject:", subj)
-			cat("\n")
-			cat("budget:",budget)
-			cat("\n")
-			cat("-------------------------------------------\n")
+				cat("###############################################################\n")
+				cat("subject:", subj)
+				cat("\n")
+				cat("budget:",budget)
+				cat("\n")
+				cat("###############################################################\n")
 
 				
 			# LINE:BRANCH

@@ -41,12 +41,14 @@ measureA <- function(a,b){
 calculateEffectSize <- function() {
 	for(subj in subjects) {
         	for (budget in budgets) {
+			
+				cat("###############################################################\n")
+				cat("subject:", subj)
+				cat("\n")
+				cat("budget:",budget)
+				cat("\n")
+				cat("###############################################################\n")
 
-               		cat("subject:", subj)
-                	cat("\n")
-
-	                cat("budget:",budget)
-        	        cat("\n")
 
 			# LINE:BRANCH
 			default_rows  = subset(stats,SUBJ==subj & TOOL=='evosuite_default' & BUD==budget)
@@ -97,13 +99,9 @@ calculateEffectSize <- function() {
 			cat("\n")
 
 			cat("\n")
-
-			cat("---------------------------------------------------------------------------------","\n")
-        	        cat("\n")
-
+   	        cat("\n")
 
 			cat("LINE:BRANCH:EXCEPTION vs. LINE:BRANCH","\n")
-        	        cat("\n")
 			my_measureA = measureA(default_errors, line_branch_errors)
 			cat("A12=", my_measureA, "\n")
 			if (length(default_errors)==0) {
@@ -112,10 +110,9 @@ calculateEffectSize <- function() {
 				my_p_value = wilcox.test(default_errors, line_branch_errors)$p.value	
 				cat("p-value",my_p_value,"\n")
 			}
-        	        cat("\n")
+			cat("\n")
 					
 			cat("LINE:BRANCH:EXCEPTION vs. EPATRANSITION","\n")
-        	        cat("\n")
 			my_measureA = measureA(default_errors, epatransition_errors)
 			cat("A12=", my_measureA, "\n")
 			if (length(default_errors)==0) {
@@ -124,10 +121,9 @@ calculateEffectSize <- function() {
 				my_p_value = wilcox.test(default_errors, epatransition_errors)$p.value	
 				cat("p-value",my_p_value,"\n")
 			}
-        	        cat("\n")
+			cat("\n")
 
 			cat("LINE:BRANCH:EXCEPTION vs. EPATRANSITION:EPAEXCEPTION","\n")
-        	        cat("\n")
 			my_measureA = measureA(default_errors, epatransition_epaexception_errors)
 			cat("A12=", my_measureA, "\n")
 			if (length(default_errors)==0) {
@@ -136,11 +132,10 @@ calculateEffectSize <- function() {
 				my_p_value = wilcox.test(default_errors, epatransition_epaexception_errors)$p.value	
 				cat("p-value",my_p_value,"\n")
 			}
-        	        cat("\n")
+			cat("\n")
 
 
 			cat("LINE:BRANCH:EXCEPTION vs. EPAADJACENTEDGES","\n")
-        	        cat("\n")
 			my_measureA = measureA(default_errors, edges_errors)
 			cat("A12=", my_measureA, "\n")
 			if (length(default_errors)==0) {
@@ -149,11 +144,10 @@ calculateEffectSize <- function() {
 				my_p_value = wilcox.test(default_errors, edges_errors)$p.value	
 				cat("p-value",my_p_value,"\n")
 			}
-        	        cat("\n")
+			cat("\n")
 
 
 			cat("LINE:BRANCH:EXCEPTION vs. LINE:BRANCH:EXCEPTION:EPATRANSITION","\n")
-        	        cat("\n")
 			my_measureA = measureA(default_errors, line_branch_exception_epatransition_errors)
 			cat("A12=", my_measureA, "\n")
 			if (length(default_errors)==0) {
@@ -162,11 +156,10 @@ calculateEffectSize <- function() {
 				my_p_value = wilcox.test(default_errors, line_branch_exception_epatransition_errors)$p.value	
 				cat("p-value",my_p_value,"\n")
 			}
-        	        cat("\n")
+			cat("\n")
 
 
 			cat("LINE:BRANCH:EXCEPTION vs. LINE:BRANCH:EXCEPTION:EPATRANSITION:EPAEXCEPTION","\n")
-        	        cat("\n")
 			my_measureA = measureA(default_errors, line_branch_exception_epatransition_epaexception_errors)
 			cat("A12=", my_measureA, "\n")
 			if (length(default_errors)==0) {
@@ -179,7 +172,6 @@ calculateEffectSize <- function() {
 
 
 			cat("LINE:BRANCH:EXCEPTION vs. LINE:BRANCH:EXCEPTION:EPAADJACENTEDGES","\n")
-        	        cat("\n")
 			my_measureA = measureA(default_errors, line_branch_exception_edges_errors)
 			cat("A12=", my_measureA, "\n")
 			if (length(default_errors)==0) {
@@ -188,9 +180,10 @@ calculateEffectSize <- function() {
 				my_p_value = wilcox.test(default_errors, line_branch_exception_edges_errors)$p.value
 				cat("p-value",my_p_value,"\n")
 			}
-        	        cat("\n")
-        	        cat("\n")
+			cat("\n")
+			cat("\n")
 		}
+		cat("========================================================================\n\n\n")
 	}
 }
 
