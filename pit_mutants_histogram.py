@@ -44,7 +44,7 @@ def count_mutant(subject, criterion, budget, stopping_condition, mutant, result)
         global mutants_histogram
         first_key = get_first_key(subject, budget, stopping_condition, mutant)
         second_key = get_second_key(criterion)
-        value = {}
+        value = {} # {criterio:mutant_result}
         mutant_result = Mutant_result()
         if first_key in mutants_histogram:
             value = mutants_histogram[first_key]
@@ -68,9 +68,10 @@ def pit_mutants_histogram(criterion, budget, stopping_condition, mutations_csv_p
             subject = row["SUBJECT"]
             mutant_key = row["MUTANT_NAME"]+"_"+row["METHOD"]+"_"+row["LINE"]
             result = row["RESULT"]
-            if mutant_key not in keys_by_file:
-                count_mutant(subject, criterion, budget, stopping_condition, mutant_key, result)
-                keys_by_file.add(mutant_key)
+            if mutant_key in keys_by_file:
+                mutant_key = mutant_key + "_2"
+            count_mutant(subject, criterion, budget, stopping_condition, mutant_key, result)
+            keys_by_file.add(mutant_key)
 
 lock = threading.Lock()
 headers_list = ["SUBJECT","BUDGET","STOP_COND","MUTANT_METHOD_LINE"]
