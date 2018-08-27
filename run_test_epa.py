@@ -242,6 +242,7 @@ class RunTestEPA(threading.Thread):
         self.generated_test_dir = os.path.join(self.subdir_testgen, 'test')
         self.generated_report_evosuite_dir = os.path.join(self.subdir_metrics, 'report_evosuite')
         self.generated_report_pitest_dir = os.path.join(self.subdir_metrics, 'report_pitest')
+        self.generated_pitest_killer_test = os.path.join(self.generated_report_pitest_dir, 'killer_test')
         self.generated_report_mujava = os.path.join(self.subdir_metrics, 'report_mujava')
         self.stopping_condition = stopping_condition
         self.search_budget = search_budget
@@ -328,14 +329,14 @@ class RunTestEPA(threading.Thread):
             resume_csv = os.path.join(self.subdir_metrics, 'resume.csv')
             criterion = get_alternative_criterion_names(self.criterion)
             
-            if self.bug_type.upper() == BugType.ALL.name:
-                pit_mutants_histogram(self.criterion, self.search_budget, self.stopping_condition, mutations_csv)
+            #if self.bug_type.upper() == BugType.ALL.name:
+            pit_mutants_histogram(self.criterion, self.search_budget, self.stopping_condition, mutations_csv, self.generated_test_dir, self.generated_pitest_killer_test)
             
             make_report_resume(self.class_name, epacoverage_csv, statistics_testgen_csv, jacoco_csv, mutations_csv, resume_csv, self.runid, self.stopping_condition, self.search_budget, criterion, self.bug_type, mujava_csv)
         
-        if self.bug_type.upper() == BugType.ALL.name and self.method in [EpatestingMethod.ONLY_PIT_MUTANTS_HISTOGRAM.value]:
+        if self.method in [EpatestingMethod.ONLY_PIT_MUTANTS_HISTOGRAM.value]:
             mutations_csv = get_mutation_csv_pit(self.generated_report_pitest_dir)
-            pit_mutants_histogram(self.criterion, self.search_budget, self.stopping_condition, mutations_csv)
+            pit_mutants_histogram(self.criterion, self.search_budget, self.stopping_condition, mutations_csv, self.generated_test_dir, self.generated_pitest_killer_test)
             
 def get_alternative_criterion_names(criterion):
     if (criterion == "line:branch"):

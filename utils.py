@@ -122,11 +122,11 @@ def init_histogram(bug_type, subject, criterion, mutants_list, ignore_list):
 def get_key(bug_type, subject, criterion, mutant):
     return "[{}] [{}] [{}] {}".format(bug_type, subject, criterion, mutant)
 
-def count_mutant(bug_type, subject, criterion, mutant):
+def count_mutant(bug_type, subject, criterion, mutant_name):
     lock.acquire()
     try:
         global mutants_histogram
-        mutant_name_key = get_key(bug_type, subject, criterion, mutant)
+        mutant_name_key = get_key(bug_type, subject, criterion, mutant_name)
         value = mutants_histogram[mutant_name_key] + 1
         mutants_histogram.update({mutant_name_key:value})
     except:
@@ -138,7 +138,7 @@ def count_mutant(bug_type, subject, criterion, mutant):
         else:
             value = mutants_histogram[newkey] + 1
             mutants_histogram.update({newkey:value})
-            print("WARN! The mutant {} has been killed, but not included in the mutant list using the bug_type '{}'".format(mutant_name_key, bug_type))
+            print("WARN! The mutant_name {} has been killed, but not included in the mutant_name list using the bug_type '{}'".format(mutant_name_key, bug_type))
     finally:
         lock.release()
 
