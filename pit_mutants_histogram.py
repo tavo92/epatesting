@@ -68,8 +68,12 @@ def pit_mutants_histogram(criterion, budget, stopping_condition, mutations_csv_p
             subject = row["SUBJECT"]
             mutant_key = row["MUTANT_NAME"]+"_"+row["METHOD"]+"_"+row["LINE"]
             result = row["RESULT"]
-            if mutant_key in keys_by_file:
-                mutant_key = mutant_key + "_2"
+            new_key = mutant_key
+            i = 2
+            while new_key in keys_by_file:
+                new_key = mutant_key + "_{}".format(i)
+                i += 1
+            mutant_key = new_key
             count_mutant(subject, criterion, budget, stopping_condition, mutant_key, result)
             keys_by_file.add(mutant_key)
 
