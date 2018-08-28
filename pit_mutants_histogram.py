@@ -2,7 +2,6 @@ import argparse
 import csv
 import threading
 import shutil
-import utils
 import os
 import sys
 
@@ -29,17 +28,16 @@ class Mutant_result:
     def add_killed(self):
         self.killed += 1
 
-    def add_result_and_save_test(self, mutant_result, test_name, test_dir, pitest_dir, mutant_name):
+    def add_result_and_save_test(self, mutant_result, test_name, test_dir, pitest_dir, mutant_name, runid):
         if "SURVIVED" == mutant_result:
             self.add_survived()
         elif "NO_COVERAGE" == mutant_result:
             self.add_nocoverage()
         elif "KILLED" == mutant_result:
             self.add_killed()
-            if not self.test:
-                saved = save_killer_test(test_dir, pitest_dir, mutant_name, test_name)
-                if saved:
-                    self.test = test_name
+            saved = save_killer_test(test_dir, pitest_dir, mutant_name, test_name)
+            if not self.test and saved:
+                self.test = test_name+"#{}".format(runid)
 
 mutants_histogram = {}
 
@@ -62,7 +60,7 @@ def save_killer_test(src, dst, mutant_name, test_name):
         return False
     return True
 
-def count_mutant(subject, criterion, budget, stopping_condition, mutant_name, result, test_name, test_dir, pitest_dir):
+def count_mutant(subject, criterion, budget, stopping_condition, mutant_name, result, test_name, test_dir, pitest_dir, runid):
     lock.acquire()
     try:
         global mutants_histogram
@@ -75,7 +73,7 @@ def count_mutant(subject, criterion, budget, stopping_condition, mutant_name, re
             if second_key in value:
                 mutant_result = value[second_key]
         
-        mutant_result.add_result_and_save_test(result, test_name, test_dir, pitest_dir, mutant_name)
+        mutant_result.add_result_and_save_test(result, test_name, test_dir, pitest_dir, mutant_name, runid)
         value.update({second_key:mutant_result})
         mutants_histogram.update({first_key:value})
     except:
@@ -83,7 +81,7 @@ def count_mutant(subject, criterion, budget, stopping_condition, mutant_name, re
     finally:
         lock.release()
 
-def pit_mutants_histogram(criterion, budget, stopping_condition, mutations_csv_path, test_dir, pitest_dir):
+def pit_mutants_histogram(criterion, budget, stopping_condition, mutations_csv_path, test_dir, pitest_dir, runid):
     #file = csv.DictReader(open(mutations_csv_path), newline='', )
     with open(mutations_csv_path, newline='') as csvfile:
         reader = csv.DictReader(csvfile, fieldnames=['NAME','SUBJECT','MUTANT_NAME','METHOD','LINE','RESULT','TEST'])
@@ -101,7 +99,7 @@ def pit_mutants_histogram(criterion, budget, stopping_condition, mutations_csv_p
                 i += 1
             mutant_key = new_key
             
-            count_mutant(subject, criterion, budget, stopping_condition, mutant_key, result, test_name, test_dir, pitest_dir)
+            count_mutant(subject, criterion, budget, stopping_condition, mutant_key, result, test_name, test_dir, pitest_dir, runid)
             keys_by_file.add(mutant_key)
 
 lock = threading.Lock()
