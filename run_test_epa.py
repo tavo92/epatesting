@@ -22,6 +22,11 @@ class BugType(Enum):
     ALL = 1
     ERRPROT = 2
 
+class AssertType(Enum):
+    ASSERT = 1
+    NO_ASSERT = 2
+    NO_ASSERT_EXCEPTION = 3
+
 
 def run_evosuite(evosuite_jar_path, projectCP, class_name, criterion, epa_path, stopping_condition, search_budget, test_dir='test', report_dir='report'):
     #is_JDBCResultSet = "JDBCResultSet" in class_name
@@ -30,11 +35,11 @@ def run_evosuite(evosuite_jar_path, projectCP, class_name, criterion, epa_path, 
     utils.print_command(command)
     subprocess.check_output(command, shell=True)
 
-def workaround_test(test_dir, class_name, file_name, add_fails):
+def workaround_test(test_dir, class_name, file_name, add_fails, assert_type):
     packages = class_name.split(".")[0:-1]
     packages_dir = utils.get_package_dir(packages)
     java_file = os.path.join(test_dir, packages_dir, file_name)
-    utils.replace_assert_catch_in_test(java_file)
+    utils.replace_assert_catch_in_test(java_file, assert_type)
     if(add_fails):
         utils.add_fails_in_test(java_file)
 
@@ -227,7 +232,7 @@ def check_if_exists_testgendir_in_other_bug_type(generated_test_dir, generated_t
 lock = threading.Lock()
 class RunTestEPA(threading.Thread):
 
-    def __init__(self, name, junit_jar, instrumented_code_dir, original_code_dir, evosuite_classes, evosuite_jar_path, evosuite_runtime_jar_path, class_name, epa_path, criterion, bug_type, stopping_condition, search_budget, runid, method, results_dir_name, subdir_mutants, error_prot_list, ignore_mutants_list, hamcrest_jar_path):
+    def __init__(self, name, junit_jar, instrumented_code_dir, original_code_dir, evosuite_classes, evosuite_jar_path, evosuite_runtime_jar_path, class_name, epa_path, criterion, bug_type, assert_type, stopping_condition, search_budget, runid, method, results_dir_name, subdir_mutants, error_prot_list, ignore_mutants_list, hamcrest_jar_path):
         threading.Thread.__init__(self)
 
         self.subdir_testgen = os.path.join(results_dir_name, "testgen", name, bug_type, stopping_condition, search_budget, criterion.replace(':', '_').lower(), "{}".format(runid))
@@ -260,6 +265,7 @@ class RunTestEPA(threading.Thread):
         self.bin_original_code_dir = get_subject_original_bin_dir(results_dir_name, name)
         self.bin_instrumented_code_dir = get_subject_instrumented_bin_dir(results_dir_name, name)
         self.method = method
+        self.assert_type = assert_type
         
         self.error_prot_list = error_prot_list
         self.ignore_mutants_list = ignore_mutants_list
@@ -285,12 +291,15 @@ class RunTestEPA(threading.Thread):
 
             if(not testsuite_exists):
                 run_evosuite(evosuite_jar_path=self.evosuite_jar_path, projectCP=bin_code_dir, class_name=self.class_name, criterion=self.criterion, epa_path=self.epa_path, test_dir=self.generated_test_dir, stopping_condition=self.stopping_condition, search_budget=self.search_budget, report_dir=self.generated_test_report_evosuite_dir)
-            
+
+            add_fails= False
             if(self.bug_type.upper() == BugType.ERRPROT.name):
-                add_fails= False;
+                # If is run in errprot mode, then always remove asserts and specific exceptions
+                self.assert_type = AssertType.NO_ASSERT_EXCEPTION
                 #if("JDBCResultSet" in self.name):
                     #add_fails= True;
-                workaround_test(self.generated_test_dir, self.class_name, self.class_name.split(".")[-1]+"_ESTest.java", add_fails)
+            if self.assert_type.upper() in [AssertType.NO_ASSERT.name, AssertType.NO_ASSERT_EXCEPTION.name]:
+                workaround_test(self.generated_test_dir, self.class_name, self.class_name.split(".")[-1]+"_ESTest.java", add_fails, self.assert_type)
 
             utils.compile_test_workdir(self.generated_test_dir, code_dir, self.junit_jar, self.evosuite_classes, self.evosuite_runtime_jar_path)
 

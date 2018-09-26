@@ -5,6 +5,7 @@ import subprocess
 from sys import platform
 import threading
 import run_test_epa
+from run_test_epa import AssertType
 
 def get_package_dir(package_array):
     packages_dir = ""
@@ -22,12 +23,14 @@ def make_dirs_if_not_exist(path):
     if not os.path.exists(path):
         os.makedirs(path)
     
-def replace_assert_catch_in_test(java_file):
+def replace_assert_catch_in_test(java_file, assert_type):
     new_file = ""
     with open(java_file) as file:
         for line in file:
-            line = re.sub('\sassert','//assert', line.rstrip())
-            line = re.sub('catch\\(\w*','catch(Exception', line.rstrip())
+            if assert_type.upper() in [run_test_epa.AssertType.NO_ASSERT.name, run_test_epa.AssertType.NO_ASSERT_EXCEPTION.name]:
+                line = re.sub('\sassert','//assert', line.rstrip())
+            if assert_type.upper() == run_test_epa.AssertType.NO_ASSERT_EXCEPTION.name:
+                line = re.sub('catch\\(\w*','catch(Exception', line.rstrip())
             new_file += line+"\n"
 
     shutil.move(java_file, java_file+".original")
