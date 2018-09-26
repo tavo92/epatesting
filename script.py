@@ -123,7 +123,7 @@ class EPAConfig:
         
         for subject in subjects:
             mujava_coverage.setup_mujava(subject.mutants_dir, subject.class_name, subject.subdir_mutants, subject.original_code_dir)
-            run_test_epa.setup_subjects(self.results_dir_name, subject.original_code_dir, subject.instrumented_code_dir, subject.name, self.evosuite_classes)
+            run_test_epa.setup_subjects(self.results_dir_name, subject.original_code_dir, subject.instrumented_code_dir, subject.name, self.evosuite_classes, subject.class_name)
 
 
 _start_time = time.time()

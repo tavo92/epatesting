@@ -47,9 +47,11 @@ def measure_evosuite(evosuite_jar_path, projectCP, testCP, class_name, epa_path,
     utils.print_command(command)
     subprocess.check_output(command, shell=True)
 
-def setup_subjects(results_dir_name, original_code_dir, instrumented_code_dir, name, evosuite_classes):
+def setup_subjects(results_dir_name, original_code_dir, instrumented_code_dir, name, evosuite_classes, class_name):
     bin_original_code_dir = get_subject_original_bin_dir(results_dir_name, name)
     bin_instrumented_code_dir = get_subject_instrumented_bin_dir(results_dir_name, name)
+    if exist_subject(bin_original_code_dir, bin_instrumented_code_dir, class_name):
+        return
     utils.compile_workdir(original_code_dir, bin_original_code_dir, evosuite_classes)
     utils.compile_workdir(instrumented_code_dir, bin_instrumented_code_dir, evosuite_classes)
     
@@ -61,6 +63,12 @@ def get_subject_instrumented_bin_dir(results_dir_name, subject):
 
 def get_subject_dir(results_dir_name, subject):
     return os.path.join(results_dir_name, "subjects", subject)
+
+def exist_subject(bin_original_code_dir, bin_instrumented_code_dir, class_name):
+    package_dir = utils.get_package_dir(class_name.split(".")[0:-1])
+    if os.path.exists(os.path.join(bin_original_code_dir, package_dir)) and os.path.exists(os.path.join(bin_instrumented_code_dir, package_dir)):
+        return True
+    return False
 
 def edit_pit_pom(file_path, targetClasses, targetTests, output_file):
 
