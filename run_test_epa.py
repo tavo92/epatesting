@@ -265,7 +265,7 @@ class RunTestEPA(threading.Thread):
         self.bin_original_code_dir = get_subject_original_bin_dir(results_dir_name, name)
         self.bin_instrumented_code_dir = get_subject_instrumented_bin_dir(results_dir_name, name)
         self.method = method
-        self.assert_type = AssertType.ASSERT # default
+        self.assert_type = AssertType.ASSERT.name # default
         
         self.error_prot_list = error_prot_list
         self.ignore_mutants_list = ignore_mutants_list
@@ -295,7 +295,7 @@ class RunTestEPA(threading.Thread):
             add_fails= False
             if(self.bug_type.upper() == BugType.ERRPROT.name):
                 # If is run in errprot mode, then always remove asserts and specific exceptions
-                self.assert_type = AssertType.NO_ASSERT_EXCEPTION
+                self.assert_type = AssertType.NO_ASSERT_EXCEPTION.name
                 #if("JDBCResultSet" in self.name):
                     #add_fails= True;
             if self.assert_type.upper() in [AssertType.NO_ASSERT.name, AssertType.NO_ASSERT_EXCEPTION.name]:
