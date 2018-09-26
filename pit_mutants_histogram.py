@@ -49,14 +49,16 @@ def get_second_key(criterion):
 
 def save_killer_test(src, dst, mutant_name, test_name):
     mutant_name = mutant_name.replace("org.pitest.mutationtest.engine.gregor.mutators.","")
+    mutant_name = mutant_name.replace("<","_")
+    mutant_name = mutant_name.replace(">","_")
     new_dir = os.path.join(dst, mutant_name+"#"+test_name)
     try:
         if os.path.exists(new_dir):
             shutil.rmtree(new_dir)
         shutil.copytree(src, new_dir)
     except:
-        print("ERROR copying {}".format(src))
-        print("ERROR INFO: {}".format(sys.exc_info()[0]))
+        print("save_killer_test - ERROR copying '{}' to '{}'".format(src, new_dir))
+        print("save_killer_test - ERROR INFO: {}, {}".format(sys.exc_info()[0], sys.exc_info()[1]))
         return False
     return True
 
