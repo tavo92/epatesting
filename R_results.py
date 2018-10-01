@@ -89,9 +89,9 @@ def generate_r_results(r_executable_path, script_r_path, file_path, criterios_li
         
     i = 0
     while i < len(criterios_list):
-        criterios += "\"{}\" ".format(criterios_list[i])
+        criterios += "\"{}\" ".format(criterios_list[i].strip())
         i += 1
-    command = "\"{}\" \"{}\" \"{}\" {} > {}".format(r_executable_path, script_r_path, file_path, criterios, output)
+    command = "\"{}\" \"{}\" \"{}\" {} > {} 2> {}".format(r_executable_path, script_r_path, file_path, criterios, output, output+".err")
     utils.print_command(command)
     subprocess.check_output(command, shell=True)
 
