@@ -1,6 +1,7 @@
 import subprocess
 import utils
 import csv
+import argparse 
 
 
 def generate_latex_table(r_results_file, output):
@@ -95,10 +96,14 @@ def generate_r_results(r_executable_path, script_r_path, file_path, criterios_li
     subprocess.check_output(command, shell=True)
 
 if __name__ == '__main__':
-    #parser = argparse.ArgumentParser()
-    #parser.add_argument("all_resumes_csv", help="all_resumes.csv")
-    #args = parser.parse_args()
-    generate_r_results("C:\\Program Files\\R\\R-3.5.0\\bin\\Rscript.exe", "C:\\Users\\JGodoy\\workspace-epa\\epatesting\\r_scripts\\effect_size_pit_vs_default.R", "C:\\Users\\JGodoy\\Desktop\\Results_analysis_generations\\Final_results\\SinAsserts\\all_resumes.csv",
-                  ["evosuite_epaalone", "epaadjacentedges", "epatransition_epaexception"], "temp")
-    generate_latex_table("C:\\Users\\JGodoy\\workspace-epa\\epatesting\\r_scripts\\out.txt", "C:\\Users\\JGodoy\\workspace-epa\\epatesting\\r_scripts\\out2.tex")
+    parser = argparse.ArgumentParser()
+    parser.add_argument("r_executable_path", help="r_executable_path")
+    parser.add_argument("effect_size_pit_vs_default_script", help="effect_size_pit_vs_default.R")
+    parser.add_argument("all_resumes", help="all_resumes.csv")
+    parser.add_argument("criterios", help="criterios")
+    parser.add_argument("output_csv", help="output.csv")
+    parser.add_argument("output_tex", help="output.tex")
+    args = parser.parse_args()
+    generate_r_results(args.r_executable_path, args.effect_size_pit_vs_default_script, args.all_resumes, args.criterios.split(","), args.output_csv)
+    generate_latex_table(args.output_csv, args.output_tex)
     print("Done!")

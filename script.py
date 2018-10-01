@@ -8,6 +8,7 @@ import os
 import time
 import utils
 import pit_mutants_histogram
+import R_results
 
 class Subject:
 
@@ -50,6 +51,11 @@ class EPAConfig:
         self.workers = int(config['DEFAULT']['Workers'])
         self.hamcrest_jar_path = replace_paths_separator(config['DEFAULT']['HamcrestJarPath'])
         self.hamcrest_jar_path = os.path.join(user_home_dir, self.hamcrest_jar_path)
+        
+        # R SetUp
+        self.r_executable_path = replace_paths_separator(config['R_SETUP']['R_executable_path'])
+        self.R_script = config['R_SETUP']['R_script']
+        self.Criterion_list = config['R_SETUP']['Criterion_list']
 
         # Reads each section witch defines a run
         # tests_to_run = []
@@ -57,6 +63,8 @@ class EPAConfig:
         self.subjects = {}
 
         for section in config.sections():
+            if section == "R_SETUP":
+                continue
             name = config[section]['Name']
             instrumented_code_dir = replace_paths_separator(config[section]['InstrumentedCodeDir'])
             instrumented_code_dir = os.path.join(user_home_dir, instrumented_code_dir)
@@ -178,5 +186,8 @@ if __name__ == '__main__':
     merge_all_resumes(all_resumes, 'all_resumes.csv')
     utils.save_file("mujava_histogram.txt", utils.get_mutant_histogram())
     utils.save_file("pit_histogram.txt", pit_mutants_histogram.get_histogram())
+    print("Generating R Results...")
+    R_results.generate_r_results(config.r_executable_path, config.R_script, "all_resumes.csv", config.Criterion_list.split(","), "summary_table.csv")
+    R_results.generate_latex_table("summary_table.csv", "summary_table.tex")
     print("Done! {}".format(time.strftime("%H:%M:%S")))
     print_elapsed_time()
