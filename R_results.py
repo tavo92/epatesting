@@ -1,7 +1,7 @@
 import subprocess
-import utils
 import csv
-import argparse 
+import argparse
+import os 
 
 
 def generate_latex_table(r_results_file, output):
@@ -9,6 +9,10 @@ def generate_latex_table(r_results_file, output):
         with open(r_results_file, newline='') as csvfile:
             reader = csv.DictReader(csvfile)
             return len(reader.fieldnames)
+
+    if not os.path.exists(r_results_file):
+        print("generate_latex_table: Does not exits file (r_results_file): {}".format(r_results_file))
+        return
     i = 0
     rows_size = get_rows_columns_size(r_results_file)
     tabular_desc = "|"
@@ -69,8 +73,10 @@ def generate_latex_table(r_results_file, output):
     table += subheader + "\n"
     table += content
     table += declaration_end
-    print(table)
-    utils.save_file(output, table)
+    # Save file
+    file = open(output,"w")
+    file.write(table)
+    file.close()
 
 
 def generate_r_results(r_executable_path, script_r_path, file_path, criterios_list, output):
@@ -82,6 +88,27 @@ def generate_r_results(r_executable_path, script_r_path, file_path, criterios_li
                 if not row['TOOL'] in criterios:
                     criterios.append(row['TOOL'])
         return criterios
+    
+    def exists_criterion_in_file(file_path, criterion):
+        with open(file_path, newline='') as csvfile:
+            reader = csv.DictReader(csvfile)
+            for row in reader:
+                if row['TOOL'] == criterion:
+                    return True
+        return False
+    
+    def exists_default_criterion(file_path):
+        return exists_criterion_in_file(file_path, "line_branch_exception")
+
+    if not os.path.exists(r_executable_path):
+        print("generate_r_results: Does not exists file (r_executable_path): {}".format(r_executable_path))
+        return
+    if not os.path.exists(script_r_path):
+        print("generate_r_results: Does not exists file (script_r_path): {}".format(script_r_path))
+        return
+    if not os.path.exists(file_path):
+        print("generate_r_results: Does not exists file (file_path): {}".format(file_path))
+        return
 
     criterios = ""
     if criterios_list[0] == "ALL":
@@ -89,10 +116,16 @@ def generate_r_results(r_executable_path, script_r_path, file_path, criterios_li
         
     i = 0
     while i < len(criterios_list):
-        criterios += "\"{}\" ".format(criterios_list[i].strip())
+        curr_criterion = criterios_list[i].strip()
+        if not exists_default_criterion(file_path):
+            print("Does not exists criterion 'line_branch_exception' in all_resumes file. You need it for compare results!")
+            return
+        if not exists_criterion_in_file(file_path, curr_criterion):
+            print("Does not exists criterion '{}' in all_resumes file. Check it!".format(curr_criterion))
+            return
+        criterios += "\"{}\" ".format(curr_criterion)
         i += 1
     command = "\"{}\" \"{}\" \"{}\" {} > {} 2> {}".format(r_executable_path, script_r_path, file_path, criterios, output, output+".err")
-    utils.print_command(command)
     subprocess.check_output(command, shell=True)
 
 if __name__ == '__main__':

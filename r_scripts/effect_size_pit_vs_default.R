@@ -6,21 +6,26 @@ if (length(args)< 1) {
   stop("Input csv file argument must be supplied (report.csv)", call.=FALSE)
 }
 
-criterios <- list()
-i = 2
-while( i <= length(args))
-{
-    criterios <- c(criterios, args[i])
-    i = i + 1
-}
 csv_filename = args[1]
-
 # run the script
 stats = read.csv(csv_filename, header=TRUE, sep=",")
 
 subjects = unique(stats$SUBJ)
 tools = unique(stats$TOOL)
 budgets = unique(stats$BUD)
+
+criterios <- list()
+i = 2
+while( i <= length(args))
+{
+	curr_criterio = args[i]
+	if (!(curr_criterio %in% tools))
+	{
+	  stop("\nERROR!! Does not exists criterion '", curr_criterio, "' in '", csv_filename,"'\n", sep="")
+	}
+    criterios <- c(criterios, curr_criterio)
+    i = i + 1
+}
 
 measureA <- function(a,b){
 
@@ -53,7 +58,7 @@ printHeader <- function()
 	second_line = ""
 	while(i <= length(criterios))
 	{
-		curr_criterio = criterios[[i]]
+		curr_criterio = criterios[[i]]		
 		i = i + 1
 		if (curr_criterio == "line_branch_exception")
 		{
@@ -97,7 +102,8 @@ calculateEffectSize <- function()
 				cat(", ", my_measureA)
 				if (length(default_errors)==0)
 				{
-					cat("N/A")
+					stop("ERROR!! Does not exists criterion line_branch_exception in file", csv_filename, call.=FALSE)
+					return
 				} else
 				{
 					my_p_value = wilcox.test(default_errors, errors)$p.value
