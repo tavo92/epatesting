@@ -99,7 +99,7 @@ calculateEffectSize <- function()
 				errors = rows$PIMUT
 				
 				my_measureA = measureA(default_errors, errors)
-				cat(", ", my_measureA)
+				cat(", ", round(my_measureA, digits=4))
 				if (length(default_errors)==0)
 				{
 					stop("ERROR!! Does not exists criterion line_branch_exception in file", csv_filename, call.=FALSE)
@@ -107,6 +107,16 @@ calculateEffectSize <- function()
 				} else
 				{
 					my_p_value = wilcox.test(default_errors, errors)$p.value
+					if (my_p_value < 0.005)
+					{
+						my_p_value = "< 0.005"
+					} else if (my_p_value < 0.05)
+					{
+						my_p_value = "< 0.05"
+					} else
+					{
+						my_p_value = round(my_p_value, digits=4)
+					}
 					cat(", ", my_p_value)
 				}
 			}
