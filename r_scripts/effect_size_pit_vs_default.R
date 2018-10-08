@@ -79,7 +79,9 @@ calculateEffectSize <- function()
 {
 	for(subj in subjects)
 	{
-		cat(subj)
+		name_subj = strsplit(subj, "[.]")[[1]]
+		name_subj = tail(name_subj, n=1)
+		cat(name_subj)
 		for (budget in budgets)
 		{
 			# LINE:BRANCH:EXCEPTION
@@ -109,10 +111,10 @@ calculateEffectSize <- function()
 					my_p_value = wilcox.test(default_errors, errors)$p.value
 					if (my_p_value < 0.005)
 					{
-						my_p_value = "< 0.005"
+						my_p_value = "\\textless 0.005"
 					} else if (my_p_value < 0.05)
 					{
-						my_p_value = "< 0.05"
+						my_p_value = "\\textless 0.05"
 					} else
 					{
 						my_p_value = round(my_p_value, digits=4)

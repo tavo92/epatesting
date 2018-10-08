@@ -17,10 +17,11 @@ def generate_latex_table(r_results_file, output):
     rows_size = get_rows_columns_size(r_results_file)
     tabular_desc = "|"
     while i < rows_size:
-        tabular_desc += "l|"
+        tabular_desc += "c|"
         i += 1
     declaration_init = "% Please add the following required packages to your document preamble:\n% \\usepackage{multirow}\n"
-    declaration_init += "\\begin{table}[]\n"
+    declaration_init += "\\begin{table*}[t]\n"
+    declaration_init += "\\center\n"
     declaration_init += "\\caption{Insert here description}\label{summary-table}\n"
     declaration_init += "\\begin{tabular}{" + "{}".format(tabular_desc)+"}"
     declaration_init += "\n\\hline"
@@ -48,7 +49,7 @@ def generate_latex_table(r_results_file, output):
                         j += 1
                         continue
                     elif j+1 < len(firstLine) and firstLine[j].strip() == firstLine[j+1].strip():
-                        header += " & \multicolumn{2}{l|}"
+                        header += " & \multicolumn{2}{c|}"
                         header += "{}".format("{"+firstLine[j+1].strip()+"}")
                     subheader += curr_second_line_header
                     if not j == len(firstLine)-1:
@@ -66,7 +67,7 @@ def generate_latex_table(r_results_file, output):
     content = ""
     for __ in lines:
         content += __ + "\n"
-    declaration_end = "{}\n{}".format("\end{tabular}", "\end{table}")
+    declaration_end = "{}\n{}".format("\end{tabular}", "\end{table*}")
     
     table = declaration_init
     table += header + "\n"

@@ -16,9 +16,12 @@ tools = unique(stats$TOOL)
 budgets = unique(stats$BUD)
 
 subjects <- list()
-if (length(args) == 2 & args[2] == "ALL")
+if (length(args) == 2)
 {
-	subjects = subjects_in_file
+	if (args[2] == "ALL")
+	{
+		subjects = subjects_in_file
+	}
 } else
 {
 	i = 2
@@ -54,9 +57,12 @@ createBoxPlot <- function()
 				line_branch_exception_epatransition_epaexception_pit = line_branch_exception_epatransition_epaexception_rows$PIMUT
 				line_branch_exception_edges_pit = line_branch_exception_edges_rows$PIMUT
 
-				outputname = paste("def_plus_epa_criterion_",subj,".pdf",sep = "")
+				name_subj = strsplit(subj, "[.]")[[1]]
+				name_subj = tail(name_subj, n=1)
+				outputname = paste("def_plus_epa_criterion_",name_subj,".pdf",sep = "")
 				pdf(outputname)
-				boxplot(default_pit, line_branch_exception_epatransition_pit,  line_branch_exception_epatransition_epaexception_pit, line_branch_exception_edges_pit,names=c("default","def+epatr","def+epatr_epaexc","def+edges"),main=c("budget:",budget),ylab="PIT Score",xlab=c("subject:",subj))
+				budget_txt = paste("Budget: ", budget, " segs", sep="")
+				boxplot(default_pit, line_branch_exception_epatransition_pit, line_branch_exception_epatransition_epaexception_pit, line_branch_exception_edges_pit, names=c("default","def+epatr","def+epatr_epaexc","def+edges"),main=c(name_subj),ylab="PIT Score",xlab=budget_txt)
 				
 				default_rows  = subset(stats,SUBJ==subj & TOOL=='line_branch_exception' & BUD==budget)
 				epatransition_rows  = subset(stats,SUBJ==subj & TOOL=='evosuite_epaalone' & BUD==budget)
@@ -68,9 +74,9 @@ createBoxPlot <- function()
 				epatransition_epaexception_pit = epatransition_epaexception_rows$PIMUT
 				edges_pit = edges_rows$PIMUT
 				
-				outputname = paste("only_epa_criterion_",subj,".pdf",sep = "")
+				outputname = paste("only_epa_criterion_",name_subj,".pdf",sep = "")
 				pdf(outputname)
-				boxplot(default_pit, epatransition_pit, epatransition_epaexception_pit, edges_pit, names=c("default","epatr","epatr_epaexcep","edges"),main=c("budget:",budget),ylab="PIT Score",xlab=c("subject:",subj))
+				boxplot(default_pit, epatransition_pit, epatransition_epaexception_pit, edges_pit, names=c("default","epatr","epatr_epaexcep","edges"),main=c(name_subj),ylab="PIT Score",xlab=budget_txt)
 			}
 		}
 	}
