@@ -32,6 +32,10 @@ def generate_latex_table(r_results_file, output):
         i = 0
         for line in results:
             line = line.replace("_", "\_")
+            line = line.replace("< 0.05", "\\textbf{< 0.05}")
+            line = line.replace("< 0.005", "\\textbf{< 0.005}")
+            line = line.replace("< 0.05", "\\textless{ 0.05}")
+            line = line.replace("< 0.005", "\\textless{ 0.005}")
             if i == 0:
                 firstLine = line.split(",")
                 i += 1
