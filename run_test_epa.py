@@ -358,8 +358,8 @@ class RunTestEPA(threading.Thread):
 def get_alternative_criterion_names(criterion):
     if (criterion == "line:branch"):
         criterion = "evosuite_default"
-    if (criterion == "epatransition"):
-        criterion = "evosuite_epaalone"
-    if (criterion == "line:branch:epatransition"):
-        criterion = "evosuite_epamixed"
+    #if (criterion == "epatransition"):
+    #    criterion = "evosuite_epaalone"
+    #if (criterion == "line:branch:epatransition"):
+    #    criterion = "evosuite_epamixed"
     return criterion.replace(":","_")

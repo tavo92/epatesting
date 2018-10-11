@@ -23,7 +23,7 @@ createBoxPlot <- function() {
 			if (budget=='600') {
 			
 				default_rows  = subset(stats,SUBJ==subj & TOOL=='line_branch_exception' & BUD==budget)
-				epatransition_rows  = subset(stats,SUBJ==subj & TOOL=='evosuite_epaalone' & BUD==budget)
+				epatransition_rows  = subset(stats,SUBJ==subj & TOOL=='epatransition' & BUD==budget)
 				epatransition_epaexception_rows  = subset(stats,SUBJ==subj & TOOL=='epatransition_epaexception' & BUD==budget)
 				edges_rows  = subset(stats,SUBJ==subj & TOOL=='epaadjacentedges' & BUD==budget)
 

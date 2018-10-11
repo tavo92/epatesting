@@ -62,10 +62,10 @@ createBoxPlot <- function()
 				outputname = paste("def_plus_epa_criterion_",name_subj,".pdf",sep = "")
 				pdf(outputname)
 				budget_txt = paste("Budget: ", budget, " segs", sep="")
-				boxplot(default_pit, line_branch_exception_epatransition_pit, line_branch_exception_epatransition_epaexception_pit, line_branch_exception_edges_pit, names=c("default","def+epatr","def+epatr_epaexc","def+edges"),main=c(name_subj),ylab="PIT Score",xlab=budget_txt)
+				boxplot(default_pit, line_branch_exception_epatransition_pit, line_branch_exception_epatransition_epaexception_pit, line_branch_exception_edges_pit, names=c("DEF","DEF+EPA","DEF+EPAEX","DEF+EPAP"),main=c(name_subj),ylab="PIT Score",xlab=budget_txt)
 				
 				default_rows  = subset(stats,SUBJ==subj & TOOL=='line_branch_exception' & BUD==budget)
-				epatransition_rows  = subset(stats,SUBJ==subj & TOOL=='evosuite_epaalone' & BUD==budget)
+				epatransition_rows  = subset(stats,SUBJ==subj & TOOL=='epatransition' & BUD==budget)
 				epatransition_epaexception_rows  = subset(stats,SUBJ==subj & TOOL=='epatransition_epaexception' & BUD==budget)
 				edges_rows  = subset(stats,SUBJ==subj & TOOL=='epaadjacentedges' & BUD==budget)
 
@@ -76,7 +76,7 @@ createBoxPlot <- function()
 				
 				outputname = paste("only_epa_criterion_",name_subj,".pdf",sep = "")
 				pdf(outputname)
-				boxplot(default_pit, epatransition_pit, epatransition_epaexception_pit, edges_pit, names=c("default","epatr","epatr_epaexcep","edges"),main=c(name_subj),ylab="PIT Score",xlab=budget_txt)
+				boxplot(default_pit, epatransition_pit, epatransition_epaexception_pit, edges_pit, names=c("DEF","EPA","EPAEX","EPAP"),main=c(name_subj),ylab="PIT Score",xlab=budget_txt)
 			}
 		}
 	}

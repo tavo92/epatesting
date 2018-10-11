@@ -41,7 +41,7 @@ printPitMutationScoreMedian <- function() {
 			cat("\n")
 			
 			# EPATRANSITION
-			epatransition_rows  = subset(stats,SUBJ==subj & TOOL=='evosuite_epaalone' & BUD==budget)
+			epatransition_rows  = subset(stats,SUBJ==subj & TOOL=='epatransition' & BUD==budget)
 			epatransition_errors = epatransition_rows$PIMUT
 			cat("mean(EPATRANSITION)=", mean(epatransition_errors))
 			cat("\n")

@@ -47,7 +47,7 @@ calculateEffectSizeTable <- function() {
 
                         rows_default  = subset(stats,SUBJ==subj & TOOL=='evosuite_default' & BUD==budget)
                         rows_epamixed  = subset(stats,SUBJ==subj & TOOL=='evosuite_epamixed' & BUD==budget)
-                        rows_epaalone  = subset(stats,SUBJ==subj & TOOL=='evosuite_epaalone' & BUD==budget)
+                        rows_epaalone  = subset(stats,SUBJ==subj & TOOL=='epatransition' & BUD==budget)
 
                         mj_score_default = rows_default$MJMUT
                         mj_score_epamixed = rows_epamixed$MJMUT

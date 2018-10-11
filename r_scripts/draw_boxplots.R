@@ -24,7 +24,7 @@ createBoxPlot <- function() {
 			
         	                rows_default  = subset(stats,SUBJ==subj & TOOL=='evosuite_default' & BUD==budget)
                 	        rows_epamixed  = subset(stats,SUBJ==subj & TOOL=='evosuite_epamixed' & BUD==budget)
-                        	rows_epaalone  = subset(stats,SUBJ==subj & TOOL=='evosuite_epaalone' & BUD==budget)
+                        	rows_epaalone  = subset(stats,SUBJ==subj & TOOL=='epatransition' & BUD==budget)
 
 				epa_coverage_default = rows_default$EPA
 				epa_coverage_epamixed = rows_epamixed$EPA			

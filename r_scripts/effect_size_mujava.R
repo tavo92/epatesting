@@ -61,7 +61,7 @@ calculateEffectSize <- function() {
 			cat("\n")
 			
 			# EPATRANSITION
-			epatransition_rows  = subset(stats,SUBJ==subj & TOOL=='evosuite_epaalone' & BUD==budget)
+			epatransition_rows  = subset(stats,SUBJ==subj & TOOL=='epatransition' & BUD==budget)
 			epatransition_errors = epatransition_rows$MJMUT
 			cat("length(EPATRANSITION)=", length(epatransition_errors))
 			cat("\n")
