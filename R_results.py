@@ -3,7 +3,6 @@ import csv
 import argparse
 import os 
 
-
 def generate_latex_table(r_results_file, output):
     def get_rows_columns_size(r_results_file):
         with open(r_results_file, newline='') as csvfile:
@@ -30,12 +29,9 @@ def generate_latex_table(r_results_file, output):
     with open(r_results_file, "r") as results:
         lines = []
         i = 0
+        p_values_index = []
         for line in results:
             line = line.replace("_", "\_")
-            line = line.replace("< 0.05", "\\textbf{< 0.05}")
-            line = line.replace("< 0.005", "\\textbf{< 0.005}")
-            line = line.replace("< 0.05", "\\textless{ 0.05}")
-            line = line.replace("< 0.005", "\\textless{ 0.005}")
             if i == 0:
                 firstLine = line.split(",")
                 i += 1
@@ -43,15 +39,23 @@ def generate_latex_table(r_results_file, output):
             if i == 1:
                 secondLine = line.split(",")
                 j = 0
+                for __ in secondLine:
+                    if "p-value" in __:
+                        p_values_index.append(j)
+                    j += 1
+                    
+                j = 0
                 while j < len(firstLine):
                     curr_first_line_header = firstLine[j].strip()
                     curr_second_line_header = secondLine[j].strip()
+                    #Celda de doble fila
                     if curr_second_line_header == curr_first_line_header:
                         header += "\multirow{2}{*}"
                         header += "{}".format("{"+curr_second_line_header+"}")
                         subheader += " & "
                         j += 1
                         continue
+                    #Celda de doble columna
                     elif j+1 < len(firstLine) and firstLine[j].strip() == firstLine[j+1].strip():
                         header += " & \multicolumn{2}{c|}"
                         header += "{}".format("{"+firstLine[j+1].strip()+"}")
@@ -62,10 +66,35 @@ def generate_latex_table(r_results_file, output):
                 header += " \\\\ \\cline{2-"+"{}".format(rows_size)+"}"
                 subheader += "\\\\ \\hline"
             else:
-                curr_line = line.replace(",", " &")
-                curr_line = curr_line.replace("\n", "")
-                curr_line += " \\\\ \\hline"
-                lines.append(curr_line)
+                line = line.replace("\n", "")
+                columns_fields = line.split(",")
+                i = 0
+                previous_field = ""
+                for __ in columns_fields:
+                    if i in p_values_index:
+                        if "< 0.05" in __ or "< 0.005" in __:
+                            previous_field = "\\textbf{"+previous_field+"}"
+                            curr_field = __.replace("<", "\\textless{ ")
+                            curr_field += "}"
+                            columns_fields[i-1] = previous_field
+                            columns_fields[i] = curr_field
+                        #final_line += final_line + " & " + previous_field + " & " + curr_field 
+                    previous_field = __
+                    i += 1
+                #line = line.replace("< 0.05", "\\textless{ 0.05}")
+                #line = line.replace("< 0.005", "\\textless{ 0.005}")
+                #curr_line = line.replace(",", " &")
+                final_line = ""
+                first = True
+                for __ in columns_fields:
+                    if first:
+                        final_line = __
+                        first = False
+                        continue
+                    final_line += " & " + __
+                final_line += " \\\\ \\hline"
+                print(final_line)
+                lines.append(final_line)
             i += 1
 
     content = ""
