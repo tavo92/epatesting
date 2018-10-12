@@ -31,6 +31,7 @@ def generate_latex_table(r_results_file, output):
         p_values_index = []
         for line in results:
             line = line.replace("_", "\_")
+            line = line.replace("%", "\%")
             if i == 0:
                 firstLine = line.split(",")
                 i += 1

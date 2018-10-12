@@ -75,6 +75,21 @@ printHeader <- function()
 	cat("\n")
 }
 
+pValueRefactor <- function(p_value)
+{
+	if (p_value < 0.005)
+	{
+		p_value = "< 0.005"
+	} else if (p_value < 0.05)
+	{
+		p_value = "< 0.05"
+	} else
+	{
+		p_value = round(p_value, digits=4)
+	}
+	return (p_value)
+}
+
 calculateEffectSize <- function()
 {
 	for(subj in subjects)
@@ -108,17 +123,7 @@ calculateEffectSize <- function()
 					return
 				} else
 				{
-					my_p_value = wilcox.test(default_errors, errors)$p.value
-					if (my_p_value < 0.005)
-					{
-						my_p_value = "< 0.005"
-					} else if (my_p_value < 0.05)
-					{
-						my_p_value = "< 0.05"
-					} else
-					{
-						my_p_value = round(my_p_value, digits=4)
-					}
+					my_p_value = pValueRefactor(wilcox.test(default_errors, errors)$p.value)
 					cat(", ", my_p_value)
 				}
 			}
